@@ -1,4 +1,4 @@
-Overview of repository contents:
+### Overview of repository contents:
 #### code
   - <b>analyze_features</b>: Perform the image-statistic analyses: correlate Gabor features with semantic dimensions; decode semantic dimensions from Gabor features.
   - <b>analyze_fits</b>: Estimate feature selectivity of voxels using encoding models fits; perform analyses of fit parameters.
@@ -26,7 +26,8 @@ Overview of repository contents:
  #### plot_summary
  - Make plots of overall model performance and overall semantic selectivity of voxels (Figure 1)
  
-Setup instructions:
+ 
+### Setup instructions:
 <ol>
   <li>Clone the repository: 
   <ul>
@@ -36,7 +37,7 @@ Setup instructions:
   <li>If using our pre-computed features or model fits (from XXX OSF repo XXX), these should be placed in a folder on the same level as this repository (i.e., also inside "root").
  </ol>
  
- ### Other notes
+### Other notes
  - Where the subject ID string "999" is used, this indicates the set of 10,000 COCO images that were randomly selected for use in the image-statistics analyses (these were not viewed by any NSD participant).
  - If using any of the shell scripts in /code/run/, first ensure that the directory /code/run/sbatch_output/ exists. This folder will store the output of the shell script execution. 
  
