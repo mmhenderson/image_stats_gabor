@@ -14,7 +14,8 @@ class combined_feature_loader:
         self.do_varpart = do_varpart
         self.include_solo_models = include_solo_models
         self.max_features = np.sum(np.array([module.max_features for module in self.modules]))
-    
+        self.n_prfs = self.modules[0].n_prfs
+        
     def clear_big_features(self):
         
         for module in self.modules:
@@ -69,11 +70,28 @@ class combined_feature_loader:
 
         return masks, names
         
-    def load(self, images, prf_model_ind, fitting_mode = True):
+        
+    def get_feature_group_inds(self):
+        
+        for mi, module in enumerate(self.modules):
+            
+            gi = module.get_feature_group_inds()
+        
+            if mi==0:
+                group_inds = gi
+            else:
+                group_inds = np.concatenate([group_inds, gi+max_prev+1], axis=0)
+            
+            max_prev = np.max(group_inds)
+        
+        return group_inds
+    
+    
+    def load(self, images, prf_model_index, fitting_mode = True):
 
         for mi, module in enumerate(self.modules):
             
-            features, inds = module.load(images, prf_model_ind, fitting_mode)
+            features, inds = module.load(images, prf_model_index)
             
             if mi==0:
                 all_features_concat = features

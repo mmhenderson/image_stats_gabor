@@ -2,15 +2,44 @@ import numpy as np
 import scipy.stats
 import warnings
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+import statsmodels.stats.multitest
 
-
-def get_shared_unique_var(combined, just_a, just_b):
+def get_shared_unique_var(combined, just_a, just_b, \
+                          remove_bad_voxels = False, \
+                          convert_to_prop=False, \
+                          enforce_prop_range=False):
+    
+    """
+    Function for computing unique/shared variance based on R2 values for 
+    full and partial models. 
+    Input [R2 combined, R2 A solo, R2 B solo]
+    Returns [shared variance, unique A, unique B]
+    """
     
     unique_a = combined - just_b
     unique_b = combined - just_a
     shared_ab = just_a + just_b - combined
-   
-    return shared_ab, unique_a, unique_b
+    
+    vals = np.array([shared_ab, unique_a, unique_b]).T
+    
+    if remove_bad_voxels:
+        # Sometimes this analysis results in negative values, or values that exceed the maximum variance
+        # of the combined model. 
+        # Can choose here to simply ignore voxels that have bad result, return NaNs.
+        bad_inds = np.any(vals<0, axis=1) | np.any(vals>combined[:,None], axis=1)
+        vals[bad_inds,:] = np.nan
+        
+    if convert_to_prop:
+        # optionally convert the R2_shared and R2_unique values into a proportion
+        # of combined model R2.
+        vals /= np.tile(combined[:,None], [1,3])
+        if enforce_prop_range:
+            # force all the proportions to lie between 0 and 1.
+            # note that this can make the sum over proportions not exactly=1
+            # but it prevents negative var expl values.
+            vals = np.maximum(np.minimum(vals, 1), 0)
+
+    return vals[:,0], vals[:,1], vals[:,2]
 
 def get_r2(actual,predicted):
     """
@@ -335,3 +364,92 @@ def paired_ttest_nonpar(vals1, vals2, n_iter=1000, rndseed=None):
                                  np.mean(shuff_diffs>=real_diff)) * 2
     
     return pval_twotailed, real_diff
+
+def fdr_keepshape(pvals, alpha=0.05, method='indep'):
+    
+    """
+    This is a wrapper for the fdr function in statsmodels, allows
+    for entering a 2D array and FDR correct all values together.
+    Returns arrays same shape as original.
+    """
+    orig_shape = pvals.shape
+    pvals_reshaped = pvals.ravel()
+    
+    pvals_fdr, masked_fdr = statsmodels.stats.multitest.fdrcorrection(pvals_reshaped, alpha=alpha, method=method)
+    
+    pvals_fdr = np.reshape(pvals_fdr, orig_shape)
+    masked_fdr = np.reshape(masked_fdr, orig_shape)
+    
+    return pvals_fdr, masked_fdr
+
+def fdr(pvals, alpha=None, parametric=True):
+    
+    """
+    % fdr() - compute false detection rate mask
+    %
+    % Usage:
+    %   >> [p_fdr, p_masked] = fdr( pvals, alpha);
+    %
+    % Inputs:
+    %   pvals   - vector or array of p-values
+    %   alpha   - threshold value (non-corrected). If no alpha is given
+    %             each p-value is used as its own alpha and FDR corrected
+    %             array is returned.
+    %   parametric - use parametric FDR? If False, use non-parametric FDR. Default=True
+                   - parametric = B-H method, non-parametric = B-Y method
+    %
+    % Outputs:
+    %   p_fdr    - pvalue used for threshold (based on independence
+    %              or positive dependence of measurements)
+    %   p_masked - p-value thresholded. Same size as pvals.
+    %
+    % Author: Arnaud Delorme, SCCN, 2008-
+    %         Based on a function by Tom Nichols
+    %
+    % Reference: Bejamini & Yekutieli (2001) The Annals of Statistics
+
+    % Copyright (C) 2002 Arnaud Delorme, Salk Institute, arno@salk.edu
+
+    Ported from Matlab to Python (and modified slightly) by MMH, 2022
+    
+    """
+
+    q = alpha
+
+    p = np.sort(pvals.ravel())
+
+    V = len(p);
+
+    I = np.arange(1,V+1);
+
+    if alpha is None:
+
+        p_fdr = np.ones(pvals.shape)
+        thresholds = np.exp(np.linspace(np.log(0.1),np.log(0.000001), 100));
+
+        for thresh in thresholds:
+            # calling the function recursively here
+            _, p_masked = fdr(pvals, thresh);
+            p_fdr[p_masked] = thresh   
+
+    else:
+        if parametric:
+            # standard FDR 
+            # B-H procedure, for positively correlated or independent tests
+            c = 1;
+        else:
+            # non-parametric FDR 
+            # B-Y procedure, for negatively correlated tests
+            c = np.sum(1/(np.arange(1,V+1)))
+        
+        abv_thresh = np.where(p<=I/V*q/c)[0]
+
+        if len(abv_thresh)>0:
+            p_fdr = p[np.max(abv_thresh)]
+        else:
+            p_fdr = 0
+
+
+    p_masked = pvals<=p_fdr
+    
+    return p_fdr, p_masked

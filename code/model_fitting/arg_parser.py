@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import distutils.util
+import time
 
 def nice_str2bool(x):
     return bool(distutils.util.strtobool(x))
@@ -17,10 +18,8 @@ def get_args():
                     help="analyze sessions 1-#")
     parser.add_argument("--single_sess", type=int, default=0,
                     help="analyze just this one session (enter integer)")
-    parser.add_argument("--average_image_reps", type=nice_str2bool, default=0,
+    parser.add_argument("--average_image_reps", type=nice_str2bool, default=1,
                     help="average over trial repetitions of same image?")
-    parser.add_argument("--compute_sessionwise_r2", type=nice_str2bool, default=0,
-                    help="compute r2 for each individual session?")
     parser.add_argument("--save_model_residuals", type=nice_str2bool, default=0, 
                     help="save model residuals for each voxel?")
     parser.add_argument("--use_model_residuals", type=nice_str2bool, default=0, 
@@ -31,9 +30,10 @@ def get_args():
     parser.add_argument("--trial_subset", type=str,default='all', 
                     help="fit for a subset of trials only? default all trials")
    
-    parser.add_argument("--which_prf_grid", type=int,default=1,
+    parser.add_argument("--which_prf_grid", type=int,default=5,
                     help="which grid of candidate prfs?")
-    
+    parser.add_argument("--prf_fixed_sigma", type=float, default=None, 
+                    help="if sigma is fixed, what sigma value to use?")
     
     parser.add_argument("--fitting_type", type=str,default='texture_pyramid',
                     help="what kind of fitting are we doing? opts are 'texture_pyramid', 'texture_gabor', 'gabor_solo'")
@@ -42,18 +42,43 @@ def get_args():
     parser.add_argument("--fitting_type3", type=str,default='',
                     help="additional fitting type, for variance partition?")
     
-    
     parser.add_argument("--ridge", type=nice_str2bool, default=True,
                     help="want to do ridge regression (lambda>0)? 1 for yes, 0 for no")
+    parser.add_argument("--set_lambda_per_group", type=nice_str2bool, default=False,
+                    help="want to allow lambda to differ between diff feature groups?? 1 for yes, 0 for no")
     parser.add_argument("--zscore_features", type=nice_str2bool, default=True,
                     help="want to z-score each feature right before fitting encoding model? 1 for yes, 0 for no")
+    parser.add_argument("--do_corrcoef", type=nice_str2bool, default=True,
+                    help="want to compute validation set correlation coefficient, in addition to R2? 1 for yes, 0 for no")
     
-    parser.add_argument("--shuffle_images", type=nice_str2bool,default=False,
+    # these are ways of doing shuffling just once, as a quick test
+    parser.add_argument("--shuffle_images_once", type=nice_str2bool,default=False,
                     help="want to shuffle the images randomly (control analysis)? 1 for yes, 0 for no")
     parser.add_argument("--random_images", type=nice_str2bool,default=False,
                     help="want to use random gaussian values for images (control analysis)? 1 for yes, 0 for no")
     parser.add_argument("--random_voxel_data", type=nice_str2bool,default=False,
                     help="want to use random gaussian values for voxel data (control analysis)? 1 for yes, 0 for no")
+    
+    # shuffle_data will actually compute multiple shuffling iterations, for permutation test.
+    parser.add_argument("--shuffle_data", type=nice_str2bool,default=False,
+                    help="want to run permutation test? 1 for yes, 0 for no")
+    parser.add_argument("--n_shuff_iters", type=int,default=1000,
+                    help="how many shuffle iters?")
+    parser.add_argument("--shuff_batch_size", type=int,default=100,
+                    help="batch size over permutation iterations")
+    parser.add_argument("--shuff_rnd_seed", type=int,default=0,
+                    help="random seed to use for shuffling in permutation test.")
+   
+   
+    parser.add_argument("--bootstrap_data", type=nice_str2bool,default=False,
+                    help="want to run bootstrap test? 1 for yes, 0 for no")
+    parser.add_argument("--boot_val_only", type=nice_str2bool,default=False,
+                    help="want to run bootstrapping just during validation (faster)? 1 for yes, 0 for no")
+    parser.add_argument("--n_boot_iters", type=int,default=1000,
+                    help="how many shuffle iters?")
+    parser.add_argument("--boot_rnd_seed", type=int,default=0,
+                    help="random seed to use for shuffling in bootstrap test.")
+   
     
     parser.add_argument("--debug",type=nice_str2bool,default=False,
                     help="want to run a fast test version of this script to debug? 1 for yes, 0 for no")
@@ -63,7 +88,7 @@ def get_args():
     parser.add_argument("--use_precomputed_prfs", type=nice_str2bool,default=False,
                     help="want to use prf estimates that were already computed? 1 for yes, 0 for no")
     parser.add_argument("--prfs_model_name", type=str, default='', 
-                    help="model the prfs are from?")
+                    help="model the prfs are from? by default, uses alexnet pRFs")
     
     
     parser.add_argument("--do_val", type=nice_str2bool,default=True, 
@@ -83,13 +108,13 @@ def get_args():
                     help="what date was the model fitting done (only if you're starting from validation step.)")
     
      
-    parser.add_argument("--sample_batch_size", type=int,default=50,
+    parser.add_argument("--sample_batch_size", type=int,default=500,
                     help="number of trials to analyze at once when making features (smaller will help with out-of-memory errors)")
-    parser.add_argument("--voxel_batch_size", type=int,default=100,
+    parser.add_argument("--voxel_batch_size", type=int,default=1000,
                     help="number of voxels to analyze at once when fitting weights (smaller will help with out-of-memory errors)")
+    parser.add_argument("--voxel_batch_size_outer", type=int,default=1000,
+                    help="number of voxels to analyze at once for permutation test (smaller will help with out-of-memory errors)")
     
-    parser.add_argument("--shuff_rnd_seed", type=int,default=0,
-                    help="random seed to use for shuffling, when holding out part of training set for lambda selection.")
    
 
     # Stuff that is specific to 'gabor' models
@@ -108,14 +133,13 @@ def get_args():
                     help="number of orientation channels to use")
     parser.add_argument("--n_sf_pyr", type=int,default=4,
                     help="number of spatial frequency channels to use")
-    parser.add_argument("--use_pca_pyr_feats_hl", type=nice_str2bool,default=True,
-                    help="want to do PCA on higher level texture features before fitting? 1 for yes, 0 for no")
+    parser.add_argument("--pyr_pca_type", type=str,default=None,
+                    help="what pca type was used for texture features?")
     parser.add_argument("--group_all_hl_feats", type=nice_str2bool,default=True, 
                     help="want to simplify groups of features in texture model? 1 for yes, 0 for no")
     parser.add_argument("--do_pyr_varpart", type=nice_str2bool,default=False, 
                     help="want to do variance partition within texture model features? 1 for yes, 0 for no")
     
-   
     # Specific to sketch tokens
     parser.add_argument("--use_pca_st_feats", type=nice_str2bool,default=False,
                     help="Want to use reduced dim (PCA) version of sketch tokens features?")
@@ -144,15 +168,19 @@ def get_args():
     
     args = parser.parse_args()
     
+    if args.prf_fixed_sigma==0:
+        args.prf_fixed_sigma=None
+    if args.pyr_pca_type=='None':
+        args.pyr_pca_type = None
+        
+    if args.shuffle_data:
+        if args.shuff_rnd_seed==0:
+            args.shuff_rnd_seed = int(time.strftime('%M%H%d', time.localtime()))
+        print('\nPermutation test: random seed is %d\n'%args.shuff_rnd_seed)
+    
     # print values of a few key things to the command line...
     if args.debug==1:
         print('USING DEBUG MODE...')
-    if args.shuffle_images==1:
-        print('\nWILL RANDOMLY SHUFFLE IMAGES\n')
-    if args.random_images==1:
-        print('\nWILL USE RANDOM NOISE IMAGES\n')
-    if args.random_voxel_data==1:
-        print('\nWILL USE RANDOM DATA\n')    
     
     return args
     

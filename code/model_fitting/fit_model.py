@@ -9,12 +9,14 @@ import os
 import time
 import numpy as np
 import argparse
+import gc
 
 # import custom modules
-from feature_extraction import fwrf_features, semantic_features, merge_features
 from utils import nsd_utils, roi_utils, default_paths
 
-import initialize_fitting, arg_parser, fwrf_fit, fwrf_predict
+import initialize_fitting, arg_parser, fwrf_model
+from analyze_fits import feature_selectivity, semantic_selectivity
+# import fwrf_fit, fwrf_predict, 
 
 try:
     device = initialize_fitting.init_cuda()
@@ -50,6 +52,7 @@ def fit_fwrf(args):
         'voxel_roi': voxel_roi,
         'voxel_ncsnr': voxel_ncsnr, 
         'which_prf_grid': args.which_prf_grid,
+        'prfs_fixed_sigma': args.prf_fixed_sigma, 
         'models': prf_models,        
         'best_losses': best_losses,           
         'best_lambdas': best_lambdas,
@@ -61,10 +64,10 @@ def fit_fwrf(args):
         'partial_version_names': partial_version_names,        
         'zscore_features': args.zscore_features, 
         'ridge': args.ridge,
+        'set_lambda_per_group': args.set_lambda_per_group, 
         'debug': args.debug,
         'up_to_sess': args.up_to_sess,
         'single_sess': args.single_sess,
-        'shuff_rnd_seed': args.shuff_rnd_seed,
         'use_precomputed_prfs': args.use_precomputed_prfs,
         'saved_prfs_fn': saved_prfs_fn,
         'best_layer_each_voxel': best_layer_each_voxel,
@@ -72,13 +75,9 @@ def fit_fwrf(args):
         'voxel_subset_is_done_trn': voxel_subset_is_done_trn,
         'voxel_subset_is_done_val': voxel_subset_is_done_val,
         'trial_subset': args.trial_subset, 
+        'do_corrcoef': args.do_corrcoef,
         }
         # Might be some more things to save, depending what kind of fitting this is
-        if args.compute_sessionwise_r2:
-            dict2save.update({
-            'val_r2_sess': val_r2_sess,
-            'val_cc_sess': val_cc_sess,
-            })
         if args.use_model_residuals:
             dict2save.update({
             'residuals_model_name': args.residuals_model_name, 
@@ -104,6 +103,20 @@ def fit_fwrf(args):
             'n_sem_samp_each_axis_balanced': n_sem_samp_each_axis_balanced,
             'mean_each_sem_level_balanced': mean_each_sem_level_balanced,
             })
+        if args.shuffle_data:
+            dict2save.update({
+            'n_shuff_iters': args.n_shuff_iters, 
+            'shuff_rnd_seed': args.shuff_rnd_seed,
+            'shuff_batch_size': args.shuff_batch_size,
+            'voxel_batch_size_outer': args.voxel_batch_size_outer,
+            })
+        if args.bootstrap_data:
+            dict2save.update({
+            'n_boot_iters': args.n_boot_iters, 
+            'boot_rnd_seed': args.boot_rnd_seed,
+            'boot_val_only': args.boot_val_only,
+            'voxel_batch_size_outer': args.voxel_batch_size_outer,
+            })
         if np.any(['semantic' in ft for ft in fitting_types]):
             dict2save.update({
             'semantic_feature_set': args.semantic_feature_set,
@@ -115,8 +128,7 @@ def fit_fwrf(args):
             })          
         if np.any(['pyramid' in ft for ft in fitting_types]):
             dict2save.update({
-            'use_pca_pyr_feats_hl': args.use_pca_pyr_feats_hl,
-            'pyramid_feature_info':pyramid_feature_info,
+            'pyr_pca_type': args.pyr_pca_type,
             'group_all_hl_feats': args.group_all_hl_feats,
             'do_pyr_varpart': args.do_pyr_varpart,
             })            
@@ -148,15 +160,18 @@ def fit_fwrf(args):
         raise ValueError('if --from_scratch=True, should specify --date_str=0 (rather than entering a date)')    
     if (args.do_sem_disc or args.do_tuning) and not args.do_val:
         raise ValueError('to do tuning analysis or semantic discriminability, need to run validation (--do_val=True)')       
-      
     if args.use_model_residuals and len(args.residuals_model_name)==0:
         raise ValueError('must specify the name of model the residuals are from')
         
+    if args.shuffle_data or args.bootstrap_data:
+        # for permutation test to work, need these conditions met (haven't tested otherwise)
+        assert args.from_scratch
+        assert not (args.do_sem_disc  or args.do_tuning)
+        assert args.use_precomputed_prfs
+        assert not (args.shuffle_data and args.bootstrap_data)
+        
     val_r2 = None; 
     val_cc = None;
-    
-    val_r2_sess = None;
-    val_cc_sess = None;
     
     corr_each_feature = None
     
@@ -206,7 +221,7 @@ def fit_fwrf(args):
                                     sessions=sessions, \
                                     voxel_mask=voxel_mask, volume_space=args.volume_space, \
                                     zscore_betas_within_sess=True, \
-                                    shuffle_images=args.shuffle_images,\
+                                    shuffle_images=args.shuffle_images_once,\
                                     average_image_reps=args.average_image_reps, \
                                     random_voxel_data=args.random_voxel_data)
         
@@ -234,6 +249,16 @@ def fit_fwrf(args):
     prf_models = initialize_fitting.get_prf_models(which_grid=args.which_prf_grid, verbose=True) 
     n_prfs = prf_models.shape[0]
     
+    if args.prf_fixed_sigma is not None:
+        assert(args.use_precomputed_prfs==False)
+        # special case, we want to test all centers for only one size value.
+        print('going to fix sigma at %.3f for all voxels'%args.prf_fixed_sigma)
+        prfs_fit_mask = np.round(prf_models[:,2],3)==args.prf_fixed_sigma
+        assert(np.sum(prfs_fit_mask)>=132)
+        print('there are %d pRFs with this sigma value'%np.sum(prfs_fit_mask))
+    else:
+        prfs_fit_mask=None
+    
     sys.stdout.flush()
     
     if (args.trial_subset!='all'):
@@ -258,7 +283,6 @@ def fit_fwrf(args):
         holdout_trials_use = None
         val_trials_use = None
    
-    ########## LOAD PRECOMPUTED PRFS ##########################################################################
         
     if args.use_precomputed_prfs:
         # If we already computed pRFs for this subject on some model, can load those now and use them during 
@@ -270,11 +294,11 @@ def fit_fwrf(args):
         best_model_each_voxel = None
         saved_prfs_fn = None
 
-    ########### LOOPING OVER VOXEL SUBSETS ############################################################
-    # used for clip/alexnet when layer_name is "best_layer", diff voxels get fit w different features
+    
+    ####### DEFINE VOXEL SUBSETS TO LOOP OVER ###############################################################
+    # only used for clip/alexnet when layer_name is "best_layer", since diff voxels get fit w different features
     # otherwise this loop only goes once and voxel_subset_mask is all ones.
     
-    # define voxel subsets (if using)      
     if dnn_model is not None and (args.alexnet_layer_name=='best_layer' or args.clip_layer_name=='best_layer'):
         # special case, going to fit groups of voxels separately according to which dnn layer was best
         # creating a list of voxel masks here that will define the subsets to loop over.
@@ -283,12 +307,47 @@ def fit_fwrf(args):
         voxel_subset_masks = [best_layer_each_voxel==ll for ll in range(n_dnn_layers)]
         assert(len(best_layer_each_voxel)==n_voxels)
         assert(not args.save_model_residuals)
+        assert(not args.shuffle_data and not args.bootstrap_data) 
+        
+        # Create feature loaders here
+        feat_loader_full_list = [initialize_fitting.make_feature_loaders(args, fitting_types, vi=ll) \
+                            for ll in range(n_dnn_layers)]
+    elif args.shuffle_data or args.bootstrap_data:
+        best_layer_each_voxel = None;
+        saved_best_layer_fn = None;
+        # to prevent running out of memory, i'm batching the voxels at this stage 
+        # (doing all the shuffle iterations at once, for each batch)       
+        bs = args.voxel_batch_size_outer
+        n_batches = int(np.ceil(n_voxels/bs))
+        voxel_subset_masks = [(np.arange(n_voxels)>=(nn*bs)) & (np.arange(n_voxels)<((nn+1)*bs)) \
+                        for nn in range(n_batches)]
+        feat_loader_full_list = [initialize_fitting.make_feature_loaders(args, fitting_types, vi=0) \
+                        for nn in range(n_batches)]
+        
     else:
         # going to fit all voxels w same model
         voxel_subset_masks = [np.ones((n_voxels,), dtype=bool)]
         best_layer_each_voxel = None;
         saved_best_layer_fn = None;
         
+        # Create feature loaders here
+        feat_loader_full_list = [initialize_fitting.make_feature_loaders(args, fitting_types, vi=0)]
+        
+    max_features_overall = np.max([fl.max_features for fl in feat_loader_full_list])      
+    
+    # getting info about how variance partition will be set up
+    partial_masks_tmp, partial_version_names = feat_loader_full_list[0].get_partial_versions()      
+    print(partial_version_names)
+    print(np.sum(partial_masks_tmp, axis=1))
+    n_partial_versions = len(partial_version_names)
+    partial_masks = [[] for ii in range(len(voxel_subset_masks))] 
+    for vi, fl in enumerate(feat_loader_full_list):
+        partial_masks_tmp, partial_version_names = fl.get_partial_versions()         
+        partial_masks[vi] = partial_masks_tmp
+        assert(len(partial_version_names)==n_partial_versions)
+        
+                                 
+    ###### LOAD LAST SAVED MODEL ############################################################################
     if not args.from_scratch:
         
         # stuff that needs to happen if we are resuming from some intermediate point
@@ -300,9 +359,14 @@ def fit_fwrf(args):
         assert(last_saved['debug']==args.debug)
         assert(last_saved['which_prf_grid']==args.which_prf_grid)
         assert(np.all(last_saved['lambdas']==lambdas))
-        assert(last_saved['saved_prfs_fn']==saved_prfs_fn)
-        assert(last_saved['saved_best_layer_fn']==saved_best_layer_fn)
-
+        print(last_saved['saved_best_layer_fn'])
+        print(saved_best_layer_fn)
+        print(last_saved['saved_best_layer_fn'].split('/')[7])
+        print(saved_best_layer_fn.split('/')[7])
+        assert(last_saved['saved_prfs_fn'].split('/')[7]==saved_prfs_fn.split('/')[7])
+        assert(last_saved['saved_best_layer_fn'].split('/')[7]==saved_best_layer_fn.split('/')[7])
+        assert('shuffle_data' not in last_saved.keys() or last_saved['shuffle_data']==False)
+        
         voxel_subset_is_done_trn = last_saved['voxel_subset_is_done_trn']
         voxel_subset_is_done_val = last_saved['voxel_subset_is_done_val']
         
@@ -355,7 +419,29 @@ def fit_fwrf(args):
         voxel_subset_is_done_trn = np.zeros((len(voxel_subset_masks),),dtype=bool)
         voxel_subset_is_done_val = np.zeros((len(voxel_subset_masks),),dtype=bool)
         
-    # Start the loop
+        # preallocate some arrays for params over all voxels
+        best_losses = np.zeros((n_voxels, n_partial_versions), dtype=np.float32)
+        best_lambdas = np.zeros((n_voxels, n_partial_versions), dtype=int)
+        
+        best_prf_models = np.zeros((n_voxels, n_partial_versions), dtype=int)
+        features_mean = np.zeros((n_prfs, max_features_overall,len(voxel_subset_masks)), dtype=np.float32)
+        features_std = np.zeros((n_prfs, max_features_overall,len(voxel_subset_masks)), dtype=np.float32)
+        if args.shuffle_data or args.bootstrap_data:
+            if args.shuffle_data:
+                it = args.n_shuff_iters
+            else:
+                it = args.n_boot_iters
+            val_cc = np.zeros((n_voxels, n_partial_versions, it), dtype=np.float32)
+            val_r2 = np.zeros((n_voxels, n_partial_versions, it), dtype=np.float32) 
+            best_weights = None # save memory by not permanently saving the weights...
+            best_biases = None
+        else:            
+            val_cc = np.zeros((n_voxels, n_partial_versions), dtype=np.float32)
+            val_r2 = np.zeros((n_voxels, n_partial_versions), dtype=np.float32) 
+            best_weights = np.zeros((n_voxels, max_features_overall, n_partial_versions), dtype=np.float32)
+            best_biases = np.zeros((n_voxels, n_partial_versions), dtype=np.float32)
+        
+    ########### LOOPING OVER VOXEL SUBSETS ######################################################
     for vi, voxel_subset_mask in enumerate(voxel_subset_masks):
         
         voxel_data_trn_use = voxel_data_trn[:,voxel_subset_mask]
@@ -372,201 +458,65 @@ def fit_fwrf(args):
             voxel_subset_is_done_trn = True
             continue
         
-        ########## CREATE FEATURE LOADERS ###################################################################
-        # these help to load sets of pre-computed features in an organized way.
-        # first making a list of all the modules of interest (different feature spaces)
-        fe = []
-        fe_names = []
-        for ft in fitting_types:   
-
-            if 'gabor_solo' in ft:
-                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid,\
-                                                                feature_type='gabor_solo',\
-                                                                n_ori=args.n_ori_gabor, n_sf=args.n_sf_gabor,\
-                                                                nonlin_fn=args.gabor_nonlin_fn, \
-                                                                use_pca_feats=args.use_pca_gabor_feats)
-        
-                fe.append(feat_loader)
-                fe_names.append(ft)
-            elif 'pyramid' in ft:
-                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='pyramid_texture',\
-                                                                n_ori=args.n_ori_pyr, n_sf=args.n_sf_pyr,\
-                                                                include_ll=True, include_hl=True,\
-                                                                use_pca_feats_hl = args.use_pca_pyr_feats_hl,\
-                                                                do_varpart=args.do_pyr_varpart,\
-                                                                group_all_hl_feats=args.group_all_hl_feats)       
-                fe.append(feat_loader)
-                fe_names.append(ft)
-                pyramid_feature_info = [feat_loader.feature_column_labels, feat_loader.feature_types_include]
-
-            elif 'sketch_tokens' in ft:
-                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='sketch_tokens',\
-                                                                use_pca_feats = args.use_pca_st_feats, \
-                                                                use_residual_st_feats = args.use_residual_st_feats)
-                fe.append(feat_loader)
-                fe_names.append(ft)
-          
-            elif 'alexnet' in ft:
-                if args.alexnet_layer_name=='all_conv':
-                    names = ['Conv%d_ReLU'%(ll+1) for ll in range(n_dnn_layers)]
-                    for ll in range(n_dnn_layers):
-                        feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='alexnet',layer_name=names[ll],\
-                                                                use_pca_feats = args.use_pca_alexnet_feats,\
-                                                                padding_mode = args.alexnet_padding_mode)
-                        fe.append(feat_loader)   
-                        fe_names.append('alexnet_%s'%names[ll])
-                elif args.alexnet_layer_name=='best_layer':
-                    this_layer_name = 'Conv%d_ReLU'%(vi+1)
-                    print(this_layer_name)
-                    feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='alexnet',layer_name=this_layer_name,\
-                                                                use_pca_feats = args.use_pca_alexnet_feats,\
-                                                                padding_mode = args.alexnet_padding_mode)
-                    fe.append(feat_loader)   
-                    fe_names.append(ft)
-                else:
-                    feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='alexnet',layer_name=args.alexnet_layer_name,\
-                                                                use_pca_feats = args.use_pca_alexnet_feats,\
-                                                                padding_mode = args.alexnet_padding_mode)
-                    fe.append(feat_loader)
-                    fe_names.append(ft)
-          
-            elif 'clip' in ft:
-                if args.clip_layer_name=='all_resblocks':
-                    names = ['block%d'%(ll) for ll in range(n_dnn_layers)]
-                    for ll in range(n_dnn_layers):
-                        feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='clip',layer_name=names[ll],\
-                                                                model_architecture=args.clip_model_architecture,\
-                                                                use_pca_feats=args.use_pca_clip_feats)
-                        fe.append(feat_loader)   
-                        fe_names.append('clip_%s'%names[ll])
-                elif args.clip_layer_name=='best_layer':
-                    this_layer_name = 'block%d'%(vi)
-                    print(this_layer_name)
-                    feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='clip',layer_name=this_layer_name,\
-                                                                model_architecture=args.clip_model_architecture,\
-                                                                use_pca_feats=args.use_pca_clip_feats)
-                    fe.append(feat_loader)
-                    fe_names.append(ft) 
-                else:
-                    feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_type='clip',layer_name=args.clip_layer_name,\
-                                                                model_architecture=args.clip_model_architecture,\
-                                                                use_pca_feats=args.use_pca_clip_feats)
-                    fe.append(feat_loader)
-                    fe_names.append(ft)   
-          
-            elif 'semantic' in ft:
-                this_feature_set = ft.split('semantic_')[1]
-                if '_pca' in this_feature_set:
-                    this_feature_set = this_feature_set.split('_pca')[0]
-                    use_pca_feats=True
-                else:
-                    use_pca_feats=False
-                print('semantic feature set: %s'%this_feature_set)
-                print('use pca: %s'%use_pca_feats)
-                feat_loader = semantic_features.semantic_feature_loader(subject=args.subject,\
-                                                                which_prf_grid=args.which_prf_grid, \
-                                                                feature_set=this_feature_set, \
-                                                                use_pca_feats=use_pca_feats, \
-                                                                remove_missing=False)
-                fe.append(feat_loader)
-                fe_names.append(ft)
-          
-        # Now combine subsets of features into a single module
-        if len(fe)>1:
-            feat_loader_full = merge_features.combined_feature_loader(fe, fe_names, do_varpart = args.do_varpart, \
-                                                                     include_solo_models=args.include_solo_models)
-        else:
-            feat_loader_full = fe[0]
+        # pull out my current feature loader
+        feat_loader_full = feat_loader_full_list[vi]
         max_features = feat_loader_full.max_features 
         
-        # getting info about how variance partition will be set up
-        partial_masks_tmp, partial_version_names = feat_loader_full.get_partial_versions()      
-        print(partial_version_names)
-        print(np.sum(partial_masks_tmp, axis=1))
-        if vi==0:
-            n_partial_versions = len(partial_version_names)
-            partial_masks = [[] for ii in range(len(voxel_subset_masks))] 
-        partial_masks[vi] = partial_masks_tmp
-        assert(len(partial_version_names)==n_partial_versions)
         
-        if (vi==0) and args.from_scratch:
-            # preallocate some arrays for params over all voxels
-            best_losses = np.zeros((n_voxels, n_partial_versions), dtype=np.float32)
-            best_lambdas = np.zeros((n_voxels, n_partial_versions), dtype=int)
-            best_weights = np.zeros((n_voxels, max_features, n_partial_versions), dtype=np.float32)
-            best_biases = np.zeros((n_voxels, n_partial_versions), dtype=np.float32)
-            best_prf_models = np.zeros((n_voxels, n_partial_versions), dtype=int)
-            features_mean = np.zeros((n_prfs, max_features,len(voxel_subset_masks)), dtype=np.float32)
-            features_std = np.zeros((n_prfs, max_features,len(voxel_subset_masks)), dtype=np.float32)
-            val_cc = np.zeros((n_voxels, n_partial_versions), dtype=np.float32)
-            val_r2 = np.zeros((n_voxels, n_partial_versions), dtype=np.float32) 
-            val_cc_sess = np.zeros((n_voxels, n_partial_versions, 40), dtype=np.float32)
-            val_r2_sess = np.zeros((n_voxels, n_partial_versions, 40), dtype=np.float32) 
-            
-        # if this current feature set has more features than the first one, 
-        # might need to pad the weights array to make it fit.                 
-        if best_weights.shape[1]<max_features:
-            n2pad = max_features - best_weights.shape[1]
-            print('padding by %d elements'%n2pad)
-            print(np.shape(best_weights))
-            print(np.shape(features_mean))
-            print(np.shape(features_std))
-            best_weights = np.pad(best_weights, [[0,0], [0, n2pad], [0,0]])            
-            features_mean = np.pad(features_mean, [[0,0], [0, n2pad], [0,0]])
-            features_std = np.pad(features_std, [[0,0], [0, n2pad], [0,0]])
-            print(np.shape(best_weights))
-            print(np.shape(features_mean))
-            print(np.shape(features_std))
-            
-        #### FIT ENCODING MODEL ###################################################################################
-
+        ########## INITIALIZE ENCODING MODEL ##################################################
+        
+        model = fwrf_model.encoding_model(feat_loader_full, lambdas=lambdas, \
+                                            best_model_each_voxel = best_model_each_voxel_use, \
+                                            zscore=args.zscore_features, \
+                                            add_bias=True, \
+                                            set_lambda_per_group = args.set_lambda_per_group, \
+                                            voxel_batch_size=args.voxel_batch_size,\
+                                            sample_batch_size=args.sample_batch_size,\
+                                            device=device,\
+                                            prfs_fit_mask = prfs_fit_mask, \
+                                            shuffle_data = args.shuffle_data, \
+                                            shuff_rnd_seed = args.shuff_rnd_seed, \
+                                            n_shuff_iters = args.n_shuff_iters, \
+                                            shuff_batch_size = args.shuff_batch_size, \
+                                            bootstrap_data = args.bootstrap_data, \
+                                            boot_rnd_seed = args.boot_rnd_seed, \
+                                            n_boot_iters = args.n_boot_iters, \
+                                            boot_val_only = args.boot_val_only, \
+                                            do_corrcoef = args.do_corrcoef, \
+                                            dtype=np.float32, debug=args.debug)
+                  
+          
+        ########### FIT ENCODING MODEL ###################################################################
+        
         if not voxel_subset_is_done_trn[vi]:
    
             print('\nStarting training (voxel subset %d of %d)...\n'%(vi, len(voxel_subset_masks)))
             print(len(image_inds_trn))
 
-            best_losses_tmp, best_lambdas_tmp, best_weights_tmp, best_biases_tmp, \
-                best_prf_models_tmp, features_mean_tmp, features_std_tmp, \
-                                = fwrf_fit.fit_fwrf_model(image_inds_trn, voxel_data_trn_use, \
-                                                          image_inds_holdout, voxel_data_holdout_use, \
-                                                        feat_loader_full, prf_models, lambdas, \
-                                                        best_model_each_voxel = best_model_each_voxel_use, \
-                                                        zscore=args.zscore_features, \
-                                                        add_bias=True, \
-                                                        voxel_batch_size=args.voxel_batch_size, \
-                                                        device=device, \
-                                                        trials_use_each_prf_trn = trn_trials_use, \
-                                                        trials_use_each_prf_holdout = holdout_trials_use, \
-                                                        dtype=np.float32, debug=args.debug)
             
+            model.fit(image_inds_trn, voxel_data_trn_use, \
+                        image_inds_holdout, voxel_data_holdout_use,\
+                        trials_use_each_prf_trn = trn_trials_use,\
+                        trials_use_each_prf_holdout = holdout_trials_use)
+            print('done with fitting')
+          
             # taking the fit params for this set of voxels and putting them into the full array over all voxels
-            best_losses[voxel_subset_mask,:] = best_losses_tmp
-            best_lambdas[voxel_subset_mask,:] = best_lambdas_tmp            
-            best_weights[voxel_subset_mask,0:max_features,:] = best_weights_tmp
-            features_mean[:,0:max_features,vi] = features_mean_tmp
-            features_std[:,0:max_features,vi] = features_std_tmp
-            best_biases[voxel_subset_mask,:] = best_biases_tmp
-            best_prf_models[voxel_subset_mask,:] = best_prf_models_tmp
+            best_losses[voxel_subset_mask,:] = model.best_losses
+            best_lambdas[voxel_subset_mask,:] = model.best_lambdas 
+            features_mean[:,0:max_features,vi] = model.features_mean
+            features_std[:,0:max_features,vi] = model.features_std
+            best_prf_models[voxel_subset_mask,:] = model.best_prf_models
+            if not args.shuffle_data and not args.bootstrap_data:
+                best_weights[voxel_subset_mask,0:max_features,:] = model.best_weights
+                best_biases[voxel_subset_mask,:] = model.best_biases
             
+            model.best_lambdas = None;
+            model.best_losses = None;
+            gc.collect()
+            sys.stdout.flush()
+
             voxel_subset_is_done_trn[vi] = True
-   
+            print('done with params')
         else:
             best_losses_tmp = best_losses[voxel_subset_mask,:]
             best_lambdas_tmp = best_lambdas[voxel_subset_mask,:]
@@ -576,71 +526,57 @@ def fit_fwrf(args):
             features_mean_tmp = features_mean[:,0:max_features,vi]
             features_std_tmp = features_std[:,0:max_features,vi]
             
-        # "best_params_tmp" will be passed to validation functions (just these voxels)
-        # "best_params" will be saved (all voxels)
-        best_params_tmp = [prf_models[best_prf_models_tmp,:], best_weights_tmp, best_biases_tmp, \
-                           features_mean_tmp, features_std_tmp, best_prf_models_tmp]
-        best_params = [prf_models[best_prf_models,:], best_weights, best_biases, \
+            # put these into the model so that we can evaluate it later
+            model.best_weights, model.best_biases, \
+            model.best_prf_models, \
+            model.features_mean, model.features_std = \
+                best_weights_tmp, best_biases_tmp, \
+                best_prf_models_tmp, \
+                features_mean_tmp, features_std_tmp
+
+        # this is the list of params that gets saved, make sure to update it each time
+        if args.shuffle_data or args.bootstrap_data:
+            # to keep the saved file from getting really big, only saving the weights for first 
+            # permutation iteration.
+            # this is why we can't resume from the middle of fitting.
+            best_params = [prf_models[best_prf_models,:], None, None, \
                            features_mean, features_std, best_prf_models]
-        sys.stdout.flush()
+        else:
+            best_params = [prf_models[best_prf_models,:], best_weights, best_biases, \
+                           features_mean, features_std, best_prf_models]
+        
+        
+        
+        print('about to save')
+                  
         save_all(fn2save)   
             
-        ######### VALIDATE MODEL ON HELD-OUT TEST SET ##############################################
-        sys.stdout.flush()
+        ############### VALIDATE MODEL ##################################################################
+    
         if args.do_val and not voxel_subset_is_done_val[vi]: 
             
             print('Starting validation (voxel subset %d of %d)...\n'%(vi, len(voxel_subset_masks)))
             sys.stdout.flush()
     
-            val_cc_tmp, val_r2_tmp, voxel_data_val_pred, features_each_prf = \
-                fwrf_predict.validate_fwrf_model(best_params_tmp, prf_models, \
-                                                 voxel_data_val_use, image_inds_val, \
-                                                 feat_loader_full, zscore=args.zscore_features, \
-                                                 sample_batch_size=args.sample_batch_size, \
-                                                 voxel_batch_size=args.voxel_batch_size, \
-                                                 debug=args.debug, \
-                                                 trials_use_each_prf = val_trials_use, \
-                                                 dtype=np.float32, device=device)
+            model.validate(voxel_data_val_use, image_inds_val, trials_use_each_prf_val = val_trials_use)
+        
+            val_cc_tmp, val_r2_tmp, voxel_data_val_pred, features_each_prf =\
+                model.val_cc, model.val_r2, model.pred_voxel_data, model.features_each_prf
                      
             val_cc[voxel_subset_mask,:] = val_cc_tmp
             val_r2[voxel_subset_mask,:] = val_r2_tmp
+                                 
             if (not args.do_tuning) and (not args.do_sem_disc):
                 voxel_subset_is_done_val[vi] = True
             save_all(fn2save) 
             
-            if args.compute_sessionwise_r2:
-                for se in np.arange(40):
-                    trials_this_sess = (session_inds_val==se)                   
-                    if np.sum(trials_this_sess)==0:
-                        val_cc_sess[voxel_subset_mask,:,se] = np.nan
-                        val_r2_sess[voxel_subset_mask,:,se] = np.nan
-                    else:
-                        print('computing validation accuracy for session %d, %d trials'%(se, np.sum(trials_this_sess)))
-                        val_trials_use_this_sess = np.tile(trials_this_sess[:,np.newaxis], [1,n_prfs])
-                        val_cc_sess_tmp, val_r2_sess_tmp, _, _ = \
-                            fwrf_predict.validate_fwrf_model(best_params_tmp, prf_models, \
-                                                             voxel_data_val_use, image_inds_val, \
-                                                             feat_loader_full, zscore=args.zscore_features, \
-                                                             sample_batch_size=args.sample_batch_size, \
-                                                             voxel_batch_size=args.voxel_batch_size, \
-                                                             debug=args.debug, \
-                                                             trials_use_each_prf = val_trials_use_this_sess, \
-                                                             dtype=np.float32, device=device)
-
-                        val_cc_sess[voxel_subset_mask,:,se] = val_cc_sess_tmp
-                        val_r2_sess[voxel_subset_mask,:,se] = val_r2_sess_tmp
-                if (not args.do_tuning) and (not args.do_sem_disc):
-                    voxel_subset_is_done_val[vi] = True
-                save_all(fn2save) 
-
-            
-            ### ESTIMATE VOXELS' FEATURE TUNING #####################################################################
+            ############# ESTIMATE FEATURE SELECTIVITY #########################################################
             sys.stdout.flush()
             if args.do_tuning:
 
                 print('\nStarting feature tuning analysis (voxel subset %d of %d)...\n'%(vi, len(voxel_subset_masks)))
                 sys.stdout.flush()
-                corr_each_feature_tmp = fwrf_predict.get_feature_tuning(best_params_tmp, features_each_prf, \
+                corr_each_feature_tmp = feature_selectivity.get_feature_tuning(model.best_prf_models, features_each_prf, \
                                                                         voxel_data_val_pred, \
                                                                         trials_use_each_prf = val_trials_use, \
                                                                         debug=args.debug)
@@ -658,7 +594,7 @@ def fit_fwrf(args):
                     voxel_subset_is_done_val[vi] = True
                 save_all(fn2save)
 
-            ### ESTIMATE SEMANTIC DISCRIMINABILITY #########################################################################
+            ########### ESTIMATE SEMANTIC DISCRIMINABILITY #######################################################
             sys.stdout.flush()
             if args.do_sem_disc:
                 
@@ -670,7 +606,7 @@ def fit_fwrf(args):
                                                         models=prf_models,verbose=False, \
                                                         debug=args.debug)
                 discrim_tmp, corr_tmp, n_samp_tmp, mean_tmp = \
-                        fwrf_predict.get_semantic_discrim(best_params_tmp, \
+                        semantic_selectivity.get_semantic_discrim(model.best_prf_models, \
                                                           labels_all, unique_labs_each, \
                                                           voxel_data_val_pred,\
                                                           trials_use_each_prf = val_trials_use, \
@@ -696,7 +632,7 @@ def fit_fwrf(args):
                 print('\nGoing to compute partial correlations, for these pairs of axes:')
                 print([discrim_type_list[aa] for aa in axes_to_do])
                 partial_corr_tmp, n_samp_tmp = \
-                        fwrf_predict.get_semantic_partial_corrs(best_params_tmp, \
+                        semantic_selectivity.get_semantic_partial_corrs(model.best_prf_models, \
                                                           labels_all, axes_to_do=axes_to_do, \
                                                           unique_labels_each=unique_labs_each, \
                                                           val_voxel_data_pred=voxel_data_val_pred,\
@@ -717,18 +653,15 @@ def fit_fwrf(args):
                 
                 
         if args.save_model_residuals:
+                                 
             # going to compute model predictions on entire data set, and save them as a separate
             # file for use later on.
-            _, all_dat_r2, all_dat_pred, _ = \
-            fwrf_predict.validate_fwrf_model(best_params_tmp, prf_models, \
-                                             voxel_data, image_order, \
-                                             feat_loader_full, zscore=args.zscore_features, \
-                                             sample_batch_size=args.sample_batch_size, \
-                                             voxel_batch_size=args.voxel_batch_size, \
-                                             debug=args.debug, \
-                                             trials_use_each_prf = None, \
-                                             dtype=np.float32, device=device)
-
+                                 
+            model.validate(voxel_data, image_order, trials_use_each_prf_val = None)
+        
+            all_dat_r2 = model.val_r2
+            all_dat_pred = model.pred_voxel_data
+                                 
             initialize_fitting.save_model_residuals(voxel_data, all_dat_pred[:,:,0], \
                                                     output_dir, model_name, \
                                                     image_order, val_inds, \

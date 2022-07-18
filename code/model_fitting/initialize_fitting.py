@@ -11,7 +11,7 @@ import pandas as pd
 from datetime import datetime
 
 # import custom modules
-from feature_extraction import gabor_feature_extractor
+from feature_extraction import fwrf_features, semantic_features, merge_features
 from utils import prf_utils, default_paths, nsd_utils
 from model_fitting import saved_fit_paths
 
@@ -77,11 +77,13 @@ def get_full_save_name(args):
                 model_name += '_ridge'
             else:
                 model_name += '_OLS'
-            model_name += '_%dori_%dsf'%(args.n_ori_pyr, args.n_sf_pyr)        
-            if args.use_pca_pyr_feats_hl:
-                model_name += '_pca_HL' 
+            model_name += '_%dori_%dsf'%(args.n_ori_pyr, args.n_sf_pyr)  
+            if args.pyr_pca_type is not None:
+                model_name += '_%s'%args.pyr_pca_type
+              
             if not args.group_all_hl_feats:
                 model_name += '_allsubsets'
+           
                 
         elif 'gabor_solo' in ft:     
             fitting_types += [ft]
@@ -137,6 +139,17 @@ def get_full_save_name(args):
         
     if args.which_prf_grid!=5:
         model_name += '_pRFgrid_%d'%args.which_prf_grid
+    
+    if args.prf_fixed_sigma is not None:
+        model_name += '_fixsigma%.3f'%args.prf_fixed_sigma
+            
+    if args.shuffle_data:
+        model_name += '_permutation_test'
+    if args.bootstrap_data:
+        if args.boot_val_only:
+            model_name += '_bootstrap_test_val'        
+        else:
+            model_name += '_bootstrap_test'
         
     print(fitting_types)
     print(model_name)
@@ -148,7 +161,7 @@ def get_save_path(model_name, args):
     
     # choose where to save results of fitting - always making a new file w current timestamp.
     # add these suffixes to the file name if it's one of the control analyses
-    if args.shuffle_images==True:
+    if args.shuffle_images_once==True:
         model_name = model_name + '_SHUFFLEIMAGES'
     if args.random_images==True:
         model_name = model_name + '_RANDOMIMAGES'
@@ -166,8 +179,12 @@ def get_save_path(model_name, args):
         make_new_folder = True
     elif (args.date_str=='') or (args.date_str=='0'):
         # load most recent file
-        files_in_dir = os.listdir(os.path.join(subject_dir, model_name))       
-        my_dates = [f for f in files_in_dir if 'ipynb' not in f and 'DEBUG' not in f]
+        files_in_dir = os.listdir(os.path.join(subject_dir, model_name))   
+        if not args.debug:
+            my_dates = [f for f in files_in_dir if 'ipynb' not in f and 'DEBUG' not in f]
+        else:
+            my_dates = [f for f in files_in_dir if 'ipynb' not in f and 'DEBUG' in f]
+            my_dates = [date.split('_DEBUG')[0] for date in my_dates]
         try:
             my_dates.sort(key=lambda date: datetime.strptime(date, "%b-%d-%Y_%H%M_%S"))
         except:
@@ -243,12 +260,13 @@ def get_prf_models(which_grid=5, verbose=False):
                               eccen_range=[0, 1.4], n_eccen_steps=12, n_angle_steps=16)
     elif which_grid==5:
         models = prf_utils.make_log_polar_grid(sigma_range=[0.02, 1], n_sigma_steps=10, \
-                              eccen_range=[0, 7/8.4], n_eccen_steps=10, n_angle_steps=16)
+                              eccen_range=[0, 7/8.4], n_eccen_steps=10, n_angle_steps=16)        
     elif which_grid==6:
         models = prf_utils.make_log_polar_grid_scale_size_eccen(eccen_range=[0, 7/8.4], \
                               n_eccen_steps = 10, n_angle_steps = 16)
     elif which_grid==7:
         models = prf_utils.make_rect_grid(sigma_range=[0.04, 0.04], n_sigma_steps=1, min_grid_spacing=0.04)
+      
     else:
         raise ValueError('prf grid number not recognized')
 
@@ -260,6 +278,26 @@ def get_prf_models(which_grid=5, verbose=False):
 
     return models
 
+def most_recent_save(subject, fitting_type, n_from_end=0, root=None):     
+
+    if root is None:
+        root = default_paths.save_fits_path
+
+    folder2load = os.path.join(root,'S%02d'%(subject), fitting_type)
+     
+    # within this folder, assuming we want the most recent version that was saved
+    files_in_dir = os.listdir(folder2load)
+    from datetime import datetime
+    my_dates = [f for f in files_in_dir if 'ipynb' not in f and 'DEBUG' not in f]
+    try:
+        my_dates.sort(key=lambda date: datetime.strptime(date, "%b-%d-%Y_%H%M_%S"))
+    except:
+        my_dates.sort(key=lambda date: datetime.strptime(date, "%b-%d-%Y_%H%M"))
+    # if n from end is not zero, then going back further in time 
+    most_recent_date = my_dates[-1-n_from_end]
+
+    return most_recent_date
+
 def load_precomputed_prfs(subject, args):
     
     if len(args.prfs_model_name)==0 or args.prfs_model_name=='alexnet':
@@ -269,6 +307,12 @@ def load_precomputed_prfs(subject, args):
         saved_prfs_fn = saved_fit_paths.gabor_fit_paths[subject-1]
     elif args.prfs_model_name=='texture':
         saved_prfs_fn = saved_fit_paths.texture_fit_paths[subject-1]
+    elif 'texture_fixsigma' in args.prfs_model_name:
+        sigma = args.prfs_model_name.split('texture_fixsigma')[1]
+        fitting_type_name = 'texture_pyramid_ridge_4ori_4sf_pca_HL_fit_pRFs_fixsigma%s'%sigma
+        date = most_recent_save(subject, fitting_type_name, n_from_end=0)
+        saved_prfs_fn = os.path.join(default_paths.save_fits_path, \
+                                'S%02d'%subject,fitting_type_name,date,'all_fit_params.npy')
     else:
         raise ValueError('trying to load pre-computed prfs for model %s, not found'%args.prfs_model_name)
 
@@ -506,3 +550,133 @@ def save_model_residuals(voxel_data, voxel_data_pred, output_dir, model_name, \
                     'session_inds':session_inds, \
                     'all_dat_r2': all_dat_r2, \
                     'average_image_reps': args.average_image_reps})
+    
+    
+def make_feature_loaders(args, fitting_types, vi):
+    
+    
+    fe = []
+    fe_names = []
+    for ft in fitting_types:   
+
+        if 'gabor_solo' in ft:
+            feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid,\
+                                                            feature_type='gabor_solo',\
+                                                            n_ori=args.n_ori_gabor, n_sf=args.n_sf_gabor,\
+                                                            nonlin_fn=args.gabor_nonlin_fn, \
+                                                            use_pca_feats=args.use_pca_gabor_feats)
+
+            fe.append(feat_loader)
+            fe_names.append(ft)
+        elif 'pyramid' in ft:
+            feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='pyramid_texture',\
+                                                            n_ori=args.n_ori_pyr, n_sf=args.n_sf_pyr,\
+                                                            pca_type=args.pyr_pca_type,\
+                                                            do_varpart=args.do_pyr_varpart,\
+                                                            group_all_hl_feats=args.group_all_hl_feats, \
+                                                            include_solo_models=False)       
+            fe.append(feat_loader)
+            fe_names.append(ft)
+            
+        elif 'sketch_tokens' in ft:
+            feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='sketch_tokens',\
+                                                            use_pca_feats = args.use_pca_st_feats, \
+                                                            use_residual_st_feats = args.use_residual_st_feats)
+            fe.append(feat_loader)
+            fe_names.append(ft)
+
+        elif 'alexnet' in ft:
+            n_dnn_layers = 5;
+            if args.alexnet_layer_name=='all_conv':
+                names = ['Conv%d_ReLU'%(ll+1) for ll in range(n_dnn_layers)]
+                for ll in range(n_dnn_layers):
+                    feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='alexnet',layer_name=names[ll],\
+                                                            use_pca_feats = args.use_pca_alexnet_feats,\
+                                                            padding_mode = args.alexnet_padding_mode)
+                    fe.append(feat_loader)   
+                    fe_names.append('alexnet_%s'%names[ll])
+            elif args.alexnet_layer_name=='best_layer':
+                this_layer_name = 'Conv%d_ReLU'%(vi+1)
+                print(this_layer_name)
+                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='alexnet',layer_name=this_layer_name,\
+                                                            use_pca_feats = args.use_pca_alexnet_feats,\
+                                                            padding_mode = args.alexnet_padding_mode)
+                fe.append(feat_loader)   
+                fe_names.append(ft)
+            else:
+                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='alexnet',layer_name=args.alexnet_layer_name,\
+                                                            use_pca_feats = args.use_pca_alexnet_feats,\
+                                                            padding_mode = args.alexnet_padding_mode)
+                fe.append(feat_loader)
+                fe_names.append(ft)
+
+        elif 'clip' in ft:
+            n_dnn_layers = 16;
+            if args.clip_layer_name=='all_resblocks':
+                names = ['block%d'%(ll) for ll in range(n_dnn_layers)]
+                for ll in range(n_dnn_layers):
+                    feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='clip',layer_name=names[ll],\
+                                                            model_architecture=args.clip_model_architecture,\
+                                                            use_pca_feats=args.use_pca_clip_feats)
+                    fe.append(feat_loader)   
+                    fe_names.append('clip_%s'%names[ll])
+            elif args.clip_layer_name=='best_layer':
+                this_layer_name = 'block%d'%(vi)
+                print(this_layer_name)
+                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='clip',layer_name=this_layer_name,\
+                                                            model_architecture=args.clip_model_architecture,\
+                                                            use_pca_feats=args.use_pca_clip_feats)
+                fe.append(feat_loader)
+                fe_names.append(ft) 
+            else:
+                feat_loader = fwrf_features.fwrf_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_type='clip',layer_name=args.clip_layer_name,\
+                                                            model_architecture=args.clip_model_architecture,\
+                                                            use_pca_feats=args.use_pca_clip_feats)
+                fe.append(feat_loader)
+                fe_names.append(ft)   
+
+        elif 'semantic' in ft:
+            this_feature_set = ft.split('semantic_')[1]
+            if '_pca' in this_feature_set:
+                this_feature_set = this_feature_set.split('_pca')[0]
+                use_pca_feats=True
+            else:
+                use_pca_feats=False
+            print('semantic feature set: %s'%this_feature_set)
+            print('use pca: %s'%use_pca_feats)
+            feat_loader = semantic_features.semantic_feature_loader(subject=args.subject,\
+                                                            which_prf_grid=args.which_prf_grid, \
+                                                            feature_set=this_feature_set, \
+                                                            use_pca_feats=use_pca_feats, \
+                                                            remove_missing=False)
+            fe.append(feat_loader)
+            fe_names.append(ft)
+
+    # Now combine subsets of features into a single module
+    if len(fe)>1:
+        feat_loader_full = merge_features.combined_feature_loader(fe, fe_names, do_varpart = args.do_varpart,\
+                                                                  include_solo_models=args.include_solo_models)
+    else:
+        feat_loader_full = fe[0]
+        
+        
+    return feat_loader_full
+    
+    
