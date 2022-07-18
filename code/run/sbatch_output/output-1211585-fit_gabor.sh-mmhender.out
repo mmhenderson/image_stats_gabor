@@ -1,0 +1,164 @@
+1211585
+mind-1-11
+:/user_data/mmhender/image_stats_gabor/code/:/user_data/mmhender/modfit/code/
+#device: 1
+device#: 0
+device name: NVIDIA TITAN X (Pascal)
+
+torch: 1.8.1+cu111
+cuda:  11.1
+cudnn: 8005
+dtype: torch.float32
+numpy version: 1.21.2
+USING DEBUG MODE...
+gabor_solo
+['gabor_solo']
+gabor_solo_ridge_12ori_8sf
+Time Stamp: Jul-18-2022_1742_54
+
+Will save final output file to /user_data/mmhender/image_stats_gabor/model_fits/S01/gabor_solo_ridge_12ori_8sf/Jul-18-2022_1742_54_DEBUG/
+
+Loading data for sessions:
+[1]
+Data is located in: /lab_data/tarrlab/common/datasets/NSD/nsddata_betas/ppdata/subj01/func1pt8mm/betas_fithrf_GLMdenoise_RR...
+Loading from /lab_data/tarrlab/common/datasets/NSD/nsddata_betas/ppdata/subj01/func1pt8mm/betas_fithrf_GLMdenoise_RR/betas_session01.nii.gz...
+Raw data:
+float64 -32768.0 32767.0 (750, 81, 104, 83)
+Adjusted data (divided by 300):
+float32 -109.22667 109.223335 (750, 699192)
+z-scoring beta weights within this session...
+mean = 1.242, sigma = 1.409
+
+Size of full data set [n_trials x n_voxels] is:
+(750, 19738)
+
+After averaging - size of full data set [n_images x n_voxels] is:
+(583, 19738)
+loading train/holdout/val image list from /user_data/mmhender/nsd/stimuli/Image_data_partitions.npy
+
+Possible lambda values are:
+[0.0000000e+00 6.4989425e-02 5.5234134e-01 4.2069650e+00 3.1612778e+01
+ 2.3712740e+02 1.7782695e+03 1.3335206e+04 1.0000000e+05]
+number of pRFs: 1456
+most extreme RF positions:
+[2.7755576e-17 0.0000000e+00 2.0000000e-02]
+[ 0.7698996  -0.31890285  1.        ]
+Loading pre-computed pRF estimates for all voxels from /user_data/mmhender/image_stats_gabor/model_fits/S01/alexnet_all_conv_pca/Apr-01-2022_1317_39/all_fit_params.npy
+['full_model']
+[96.]
+
+Starting fitting for voxel mask 0 of 1, number of voxels this loop=19738
+dtype = <class 'numpy.float32'>
+device = cuda:0
+Clearing features from memory
+
+Starting training (voxel subset 0 of 1)...
+
+485
+will z-score each column
+Clearing features from memory
+
+Processing prf 0 of 1456
+Loading pre-computed features for models [0 - 99] from /user_data/mmhender/features/gabor_texture/S1_features_each_prf_12ori_8sf_gabor_solo_nonlin_grid5.h5py
+Took 8.61769 seconds to load file
+Size of features array for this image set and batch is:
+(536, 96, 100)
+Index into batch for prf 0: 0
+Final size of feature matrix for this image set and pRF is:
+(536, 96)
+prf 0 - using 485 training trials and 51 held-out trials
+
+Fitting version 0 of 1: full_model, 
+
+Processing prf 1 of 1456
+Index into batch for prf 1: 1
+Final size of feature matrix for this image set and pRF is:
+(536, 96)
+prf 1 - using 485 training trials and 51 held-out trials
+
+Fitting version 0 of 1: full_model, 
+Clearing features from memory
+done with fitting
+done with params
+about to save
+
+Saving to /user_data/mmhender/image_stats_gabor/model_fits/S01/gabor_solo_ridge_12ori_8sf/Jul-18-2022_1742_54_DEBUG/all_fit_params.npy
+
+dict_keys(['subject', 'volume_space', 'fitting_types', 'voxel_mask', 'average_image_reps', 'brain_nii_shape', 'image_order', 'voxel_index', 'voxel_roi', 'voxel_ncsnr', 'which_prf_grid', 'prfs_fixed_sigma', 'models', 'best_losses', 'best_lambdas', 'best_params', 'lambdas', 'val_cc', 'val_r2', 'partial_masks', 'partial_version_names', 'zscore_features', 'ridge', 'set_lambda_per_group', 'debug', 'up_to_sess', 'single_sess', 'use_precomputed_prfs', 'saved_prfs_fn', 'best_layer_each_voxel', 'saved_best_layer_fn', 'voxel_subset_is_done_trn', 'voxel_subset_is_done_val', 'trial_subset', 'do_corrcoef', 'corr_each_feature', 'sem_discrim_each_axis', 'sem_corr_each_axis', 'discrim_type_list', 'n_sem_samp_each_axis', 'mean_each_sem_level', 'axes_to_do', 'sem_partial_corrs', 'sem_partial_n_samp', 'axes_to_balance', 'sem_discrim_each_axis_balanced', 'sem_corr_each_axis_balanced', 'n_sem_samp_each_axis_balanced', 'mean_each_sem_level_balanced', 'n_ori_gabor', 'n_sf_gabor', 'gabor_nonlin_fn', 'use_pca_gabor_feats'])
+Starting validation (voxel subset 0 of 1)...
+
+initializing for validation
+about to preallocate arrays
+made arrays
+done initializing for validation
+Clearing features from memory
+Getting features for prf 0 of 1456
+about to load features
+Loading pre-computed features for models [0 - 99] from /user_data/mmhender/features/gabor_texture/S1_features_each_prf_12ori_8sf_gabor_solo_nonlin_grid5.h5py
+Took 1.86162 seconds to load file
+Size of features array for this image set and batch is:
+(47, 96, 100)
+Index into batch for prf 0: 0
+Final size of feature matrix for this image set and pRF is:
+(47, 96)
+loaded features
+prf 0: using 47 validation set trials
+Getting predictions for voxel batch 0 of 1
+
+Evaluating version 0 of 1: full_model
+Includes 96 features
+Getting features for prf 1 of 1456
+about to load features
+Index into batch for prf 1: 1
+Final size of feature matrix for this image set and pRF is:
+(47, 96)
+loaded features
+prf 1: using 47 validation set trials
+Getting predictions for voxel batch 0 of 1
+
+Evaluating version 0 of 1: full_model
+Includes 96 features
+Clearing features from memory
+
+Saving to /user_data/mmhender/image_stats_gabor/model_fits/S01/gabor_solo_ridge_12ori_8sf/Jul-18-2022_1742_54_DEBUG/all_fit_params.npy
+
+dict_keys(['subject', 'volume_space', 'fitting_types', 'voxel_mask', 'average_image_reps', 'brain_nii_shape', 'image_order', 'voxel_index', 'voxel_roi', 'voxel_ncsnr', 'which_prf_grid', 'prfs_fixed_sigma', 'models', 'best_losses', 'best_lambdas', 'best_params', 'lambdas', 'val_cc', 'val_r2', 'partial_masks', 'partial_version_names', 'zscore_features', 'ridge', 'set_lambda_per_group', 'debug', 'up_to_sess', 'single_sess', 'use_precomputed_prfs', 'saved_prfs_fn', 'best_layer_each_voxel', 'saved_best_layer_fn', 'voxel_subset_is_done_trn', 'voxel_subset_is_done_val', 'trial_subset', 'do_corrcoef', 'corr_each_feature', 'sem_discrim_each_axis', 'sem_corr_each_axis', 'discrim_type_list', 'n_sem_samp_each_axis', 'mean_each_sem_level', 'axes_to_do', 'sem_partial_corrs', 'sem_partial_n_samp', 'axes_to_balance', 'sem_discrim_each_axis_balanced', 'sem_corr_each_axis_balanced', 'n_sem_samp_each_axis_balanced', 'mean_each_sem_level_balanced', 'n_ori_gabor', 'n_sf_gabor', 'gabor_nonlin_fn', 'use_pca_gabor_feats'])
+
+Starting feature tuning analysis (voxel subset 0 of 1)...
+
+computing feature tuning for voxel 0 of 19738, prf -1
+
+computing feature tuning for voxel 1 of 19738, prf -1
+
+
+Saving to /user_data/mmhender/image_stats_gabor/model_fits/S01/gabor_solo_ridge_12ori_8sf/Jul-18-2022_1742_54_DEBUG/all_fit_params.npy
+
+dict_keys(['subject', 'volume_space', 'fitting_types', 'voxel_mask', 'average_image_reps', 'brain_nii_shape', 'image_order', 'voxel_index', 'voxel_roi', 'voxel_ncsnr', 'which_prf_grid', 'prfs_fixed_sigma', 'models', 'best_losses', 'best_lambdas', 'best_params', 'lambdas', 'val_cc', 'val_r2', 'partial_masks', 'partial_version_names', 'zscore_features', 'ridge', 'set_lambda_per_group', 'debug', 'up_to_sess', 'single_sess', 'use_precomputed_prfs', 'saved_prfs_fn', 'best_layer_each_voxel', 'saved_best_layer_fn', 'voxel_subset_is_done_trn', 'voxel_subset_is_done_val', 'trial_subset', 'do_corrcoef', 'corr_each_feature', 'sem_discrim_each_axis', 'sem_corr_each_axis', 'discrim_type_list', 'n_sem_samp_each_axis', 'mean_each_sem_level', 'axes_to_do', 'sem_partial_corrs', 'sem_partial_n_samp', 'axes_to_balance', 'sem_discrim_each_axis_balanced', 'sem_corr_each_axis_balanced', 'n_sem_samp_each_axis_balanced', 'mean_each_sem_level_balanced', 'n_ori_gabor', 'n_sf_gabor', 'gabor_nonlin_fn', 'use_pca_gabor_feats'])
+
+Starting semantic discriminability analysis (voxel subset 0 of 1)...
+
+loading labels from folders at /user_data/mmhender/nsd/labels/S1_within_prf_grid5 (will be slow...)
+['indoor_outdoor', 'natural_humanmade', 'animacy', 'real_world_size_binary', 'real_world_size_continuous', 'accessory', 'animal', 'appliance', 'electronic', 'food', 'furniture', 'indoor', 'kitchen', 'outdoor', 'person', 'sports', 'vehicle', 'within_accessory', 'within_animal', 'within_appliance', 'within_electronic', 'within_food', 'within_furniture', 'within_indoor', 'within_kitchen', 'within_outdoor', 'within_sports', 'within_vehicle', 'building', 'ceiling', 'floor', 'food-stuff', 'furniture-stuff', 'ground', 'other', 'plant', 'raw-material', 'sky', 'solid', 'structural', 'textile', 'wall', 'water', 'window', 'within_building', 'within_floor', 'within_food-stuff', 'within_furniture-stuff', 'within_ground', 'within_plant', 'within_raw-material', 'within_solid', 'within_structural', 'within_textile', 'within_wall', 'within_water']
+num nans each column (out of 47 trials):
+[ 2  9 17 22 19 13 13 13 13 13 13 13 13 13 13 13 13 47 45 46 47 47 45 46
+ 44 46 46 45  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 47 47 47 47
+ 46 42 45 47 47 47 44 46]
+computing semantic discriminability for voxel 0 of 19738, prf -1
+
+computing semantic discriminability for voxel 1 of 19738, prf -1
+
+
+Saving to /user_data/mmhender/image_stats_gabor/model_fits/S01/gabor_solo_ridge_12ori_8sf/Jul-18-2022_1742_54_DEBUG/all_fit_params.npy
+
+dict_keys(['subject', 'volume_space', 'fitting_types', 'voxel_mask', 'average_image_reps', 'brain_nii_shape', 'image_order', 'voxel_index', 'voxel_roi', 'voxel_ncsnr', 'which_prf_grid', 'prfs_fixed_sigma', 'models', 'best_losses', 'best_lambdas', 'best_params', 'lambdas', 'val_cc', 'val_r2', 'partial_masks', 'partial_version_names', 'zscore_features', 'ridge', 'set_lambda_per_group', 'debug', 'up_to_sess', 'single_sess', 'use_precomputed_prfs', 'saved_prfs_fn', 'best_layer_each_voxel', 'saved_best_layer_fn', 'voxel_subset_is_done_trn', 'voxel_subset_is_done_val', 'trial_subset', 'do_corrcoef', 'corr_each_feature', 'sem_discrim_each_axis', 'sem_corr_each_axis', 'discrim_type_list', 'n_sem_samp_each_axis', 'mean_each_sem_level', 'axes_to_do', 'sem_partial_corrs', 'sem_partial_n_samp', 'axes_to_balance', 'sem_discrim_each_axis_balanced', 'sem_corr_each_axis_balanced', 'n_sem_samp_each_axis_balanced', 'mean_each_sem_level_balanced', 'n_ori_gabor', 'n_sf_gabor', 'gabor_nonlin_fn', 'use_pca_gabor_feats'])
+
+Going to compute partial correlations, for these pairs of axes:
+['indoor_outdoor', 'animacy', 'real_world_size_binary']
+computing partial correlations for voxel 0 of 19738, prf -1
+
+computing partial correlations for voxel 1 of 19738, prf -1
+
+
+Saving to /user_data/mmhender/image_stats_gabor/model_fits/S01/gabor_solo_ridge_12ori_8sf/Jul-18-2022_1742_54_DEBUG/all_fit_params.npy
+
+dict_keys(['subject', 'volume_space', 'fitting_types', 'voxel_mask', 'average_image_reps', 'brain_nii_shape', 'image_order', 'voxel_index', 'voxel_roi', 'voxel_ncsnr', 'which_prf_grid', 'prfs_fixed_sigma', 'models', 'best_losses', 'best_lambdas', 'best_params', 'lambdas', 'val_cc', 'val_r2', 'partial_masks', 'partial_version_names', 'zscore_features', 'ridge', 'set_lambda_per_group', 'debug', 'up_to_sess', 'single_sess', 'use_precomputed_prfs', 'saved_prfs_fn', 'best_layer_each_voxel', 'saved_best_layer_fn', 'voxel_subset_is_done_trn', 'voxel_subset_is_done_val', 'trial_subset', 'do_corrcoef', 'corr_each_feature', 'sem_discrim_each_axis', 'sem_corr_each_axis', 'discrim_type_list', 'n_sem_samp_each_axis', 'mean_each_sem_level', 'axes_to_do', 'sem_partial_corrs', 'sem_partial_n_samp', 'axes_to_balance', 'sem_discrim_each_axis_balanced', 'sem_corr_each_axis_balanced', 'n_sem_samp_each_axis_balanced', 'mean_each_sem_level_balanced', 'n_ori_gabor', 'n_sf_gabor', 'gabor_nonlin_fn', 'use_pca_gabor_feats'])
