@@ -32,22 +32,21 @@ up_to_sess=1
 # debug=0
 # up_to_sess=40
 
-# use the pre-computed pRFs here, for main analysis
 use_precomputed_prfs=1
 which_prf_grid=5
 
 do_val=1
 from_scratch=1
-do_tuning=1
+do_tuning=0
 
-fitting_type=gabor_solo
+fitting_type=semantic
+semantic_feature_set=all_coco
 
-n_ori_gabor=12
-n_sf_gabor=8
+save_model_residuals=1
 
 for subject in ${subjects[@]}
 do
 
-    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --n_ori_gabor $n_ori_gabor --n_sf_gabor $n_sf_gabor
+    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --semantic_feature_set $semantic_feature_set --save_model_residuals $save_model_residuals
     
 done

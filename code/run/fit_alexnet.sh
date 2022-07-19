@@ -13,14 +13,15 @@ echo $SLURM_NODELIST
 
 source ~/myenv/bin/activate
 
+# change this path
+ROOT=/user_data/mmhender/
+
 # put the code directory on your python path
-# (change this path)
-PYTHONPATH=:/user_data/mmhender/image_stats_gabor/code/${PYTHONPATH}
+PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 echo $PYTHONPATH
 
-# go to folder where fitting script is located
-# (change this path)
-cd /user_data/mmhender/image_stats_gabor/code/model_fitting
+# go to folder where script is located
+cd ${ROOT}image_stats_gabor/code/model_fitting
 
 # what subjects to process?
 # subjects=(1 2 3 4 5 6 7 8)
@@ -38,8 +39,6 @@ which_prf_grid=5
 do_val=1
 from_scratch=1
 do_tuning=0
-do_sem_disc=0
-do_varpart=0
 
 fitting_type=alexnet
 alexnet_layer_name=all_conv
@@ -49,6 +48,6 @@ use_pca_alexnet_feats=1
 for subject in ${subjects[@]}
 do
   
-    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --do_sem_disc $do_sem_disc --do_varpart $do_varpart --fitting_type $fitting_type --alexnet_layer_name $alexnet_layer_name  --alexnet_padding_mode $alexnet_padding_mode  --use_pca_alexnet_feats $use_pca_alexnet_feats
+    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --alexnet_layer_name $alexnet_layer_name  --alexnet_padding_mode $alexnet_padding_mode  --use_pca_alexnet_feats $use_pca_alexnet_feats
     
 done

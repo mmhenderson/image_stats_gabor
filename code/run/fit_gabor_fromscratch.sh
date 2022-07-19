@@ -32,8 +32,7 @@ up_to_sess=1
 # debug=0
 # up_to_sess=40
 
-# use the pre-computed pRFs here, for main analysis
-use_precomputed_prfs=1
+use_precomputed_prfs=0
 which_prf_grid=5
 
 do_val=1
