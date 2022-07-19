@@ -24,7 +24,7 @@
   <li> Prepare the image data/extract features:
     <ul>
       <li> prep_data.sh
-      <li> make_labels.py
+      <li> make_labels.sh
       <li> extract_gabor_features.sh
       <li> extract_alexnet_features.sh
       <li> ^ Before executing above scripts, modify the first few lines to reflect paths on your local filesystem. You can also change other parameters: by default, we have set "debug=1", so the code runs a shortened test version. To run it for real, set debug=0. If you'd like to run all subjects, you should also change the "subjects" variable to a list over all subjects (1-8).
