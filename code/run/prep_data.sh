@@ -10,4 +10,4 @@
 # to run for real, set debug=0 (False)
 debug=1
 
-python3 code/utils/run/prep_data.py --debug $debug
+python3 ../utils/run/prep_data.py --debug $debug
