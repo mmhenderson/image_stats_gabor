@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, argparse
 
 from utils import nsd_utils
 from utils import default_paths
@@ -6,7 +6,12 @@ from utils import coco_utils
 
 nsd_root = default_paths.nsd_root
 path_to_save = default_paths.stim_root
+print('nsd_root: %s'%nsd_root)
+print('path_to_save: %s'%path_to_save)
 
+if ~os.path.exists(path_to_save)
+    os.makedirs(path_to_save)
+    
 if __name__ == '__main__':
     
     
