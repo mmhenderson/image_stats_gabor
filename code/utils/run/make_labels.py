@@ -44,7 +44,7 @@ if __name__ == '__main__':
         label_utils.write_binary_labels_csv_within_prf(subject=subject, min_pix=10, debug=debug, stuff=False, which_prf_grid=which_prf_grid)
         label_utils.write_binary_labels_csv_within_prf(subject=subject, min_pix=10, debug=debug, stuff=True, which_prf_grid=which_prf_grid)
 
-        higher-level semantic dimensions
+        # higher-level semantic dimensions
         label_utils.write_indoor_outdoor_csv(subject=subject)
         label_utils.write_natural_humanmade_csv(subject=subject, which_prf_grid=which_prf_grid, debug=debug)
         label_utils.write_realworldsize_csv(subject=subject, which_prf_grid=which_prf_grid, debug=debug)
