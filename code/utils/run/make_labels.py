@@ -29,7 +29,7 @@ if __name__ == '__main__':
     if debug:
         subjects = [1, 999]
     else:
-        subjects = np.arange(1,9)
+        subjects = list(np.arange(1,9))+[999]
         
     for subject in subjects:
 
