@@ -27,7 +27,7 @@ if __name__ == '__main__':
     which_prf_grid=5
     
     if debug:
-        subjects = [1]
+        subjects = [1, 999]
     else:
         subjects = np.arange(1,9)
         
