@@ -9,6 +9,8 @@ from utils import default_paths, nsd_utils, stats_utils
 from model_fitting import initialize_fitting 
 from feature_extraction import default_feature_loaders
 
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+
 def run_decoding(subject=999, sem_axes_decode = [0,2,3], \
                  feature_type='gabor_solo', \
                  which_prf_grid=1, debug=False, \
