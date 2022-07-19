@@ -47,16 +47,7 @@
  </ol>
  
  
-### Overview of repository contents:
-- <b>code</b>
-  - <b>analyze_features</b>: Perform the image-statistic analyses: correlate Gabor features with semantic dimensions; decode semantic dimensions from Gabor features.
-  - <b>analyze_fits</b>: Estimate feature selectivity of voxels using encoding models fits; perform analyses of fit parameters.
-  - <b>feature_extraction</b>: Compute the Gabor features and AlexNet features from input NSD images.
-  - <b>model_fitting</b>: Perform encoding model fitting. Main function to use is "fit_model.py" with various arguments to control the type of fitting (see argparse.py for options).
-  - <b>plotting</b>: Various utility functions for visualizing results.
-  - <b>run</b>: Example shell scripts to execute model fitting. 
-  - <b>utils</b>: Utility functions that are used by other functions. Note not all these functions are used here.
-  - <b>utils/run</b>: Convenience scripts to execute some of the functions utils folder. This folder includes the code needed to extract semantic category labels for each pRF.
+### Overview of jupyter notebooks:
 - <b>make_roi_tables</b>
     - Create tables of the number of voxels in each ROI (our Supplementary Tables 1-4).
 - <b>plot_feature_selectivity</b>
@@ -81,4 +72,4 @@
  - If using a workload manager (slurm) to execute the shell scripts in /code/run/, first ensure that the directory /code/run/sbatch_output/ exists. This folder will store the output of the shell script execution. 
  
 
-
+Please contact mmhender@cmu.edu with any questions or concerns.
