@@ -1,11 +1,15 @@
 ### Setup instructions:
 <ol>
   <li>Clone the repository: 
-  <ul>
+    <ul>
     <li> git clone https://github/com/mmhender/image_stats_gabor
-  </ul>
+    </ul>
   <li>Edit "root" in path_defs.py to reflect the name of the folder into which you cloned this repository.
   <li>If using our pre-computed features or model fits (from XXX OSF repo XXX), these should be placed in a folder on the same level as this repository (i.e., also inside "root").
+  <li> Add the code to your python path:
+    <ul>
+    <li> PYTHONPATH=:/YOURPATH/image_stats_gabor/code/$PYTHONPATH
+    </ul>
   <li>If running the fitting/analysis code from scratch, you can access the fMRI dataset (NSD) and images (COCO) here:
   <ul>
     <li> http://naturalscenesdataset.org/
