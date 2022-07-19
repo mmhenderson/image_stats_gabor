@@ -194,7 +194,7 @@ def get_coco_ids_indep(n_images = 10000):
     assert(not any(np.isin(ids_indep, ids_nsd)))
 
     # save as a file for use later
-    ims_df = pd.DataFrame(data=ids_use_indep, columns=['cocoId'])
+    ims_df = pd.DataFrame(data=ids_indep, columns=['cocoId'])
     ims_df.to_csv(os.path.join(default_paths.root, 'features', 'coco_ids_indep_set.csv'))
     
 def prep_indep_coco_images(n_pix=240, debug=False):

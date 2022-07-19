@@ -24,9 +24,9 @@ if __name__ == '__main__':
 
     print('debug=%d'%args.debug)
     
-    nsd_utils.make_image_data_partitions(pct_holdout=0.10)
+    # nsd_utils.make_image_data_partitions(pct_holdout=0.10)
     
-    nsd_utils.get_subject_specific_images(nsd_root, path_to_save, npix=240, debug=args.debug==1)
+    # nsd_utils.get_subject_specific_images(nsd_root, path_to_save, npix=240, debug=args.debug==1)
 
     coco_utils.get_coco_ids_indep(n_images=10000)
 
