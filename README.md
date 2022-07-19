@@ -8,7 +8,16 @@
   <li>If using our pre-computed features or model fits (from XXX OSF repo XXX), these should be placed in a folder on the same level as this repository (i.e., also inside "root").
   <li> Add the code to your python path:
     <ul>
-    <li> PYTHONPATH=:/YOURPATH/image_stats_gabor/code/$PYTHONPATH
+    <li> PYTHONPATH=:/your_root/image_stats_gabor/code/$PYTHONPATH
+    </ul>
+  <li> Prepare the image data/extract features:
+    <ul>
+      <li> code/utils/run/prep_data.py
+      <li> code/utils/run/make_labels.py
+      <li> code/feature_extraction/extract_gabor_features.py
+      <li> code/feature_extraction/extract_alexnet_features.py
+      <li> code/feature_extraction/pca_feats.py (type=alexnet)
+      <li> Example shell scripts that call the above functions are provided in code/run/; note that you might need to alter these scripts to work with your system.
     </ul>
   <li>If running the fitting/analysis code from scratch, you can access the fMRI dataset (NSD) and images (COCO) here:
   <ul>
