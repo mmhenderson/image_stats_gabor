@@ -5,15 +5,11 @@ from utils import label_utils
 from utils import default_paths
 
 nsd_root = default_paths.nsd_root
-path_to_save = default_paths.stim_root
-features_path = os.path.join(default_paths.root, 'features')
-print('nsd_root: %s'%nsd_root)
-print('path_to_save: %s'%path_to_save)
-print('features_path: %s'%features_path)
+labels_path = default_paths.stim_labels_root
 
-if not os.path.exists(path_to_save):
-    os.makedirs(path_to_save)
-    
+print('nsd_root: %s'%nsd_root)
+print('labels_path: %s'%labels_path)
+ 
 if __name__ == '__main__':
     
     
