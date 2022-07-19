@@ -9,14 +9,15 @@
 
 source ~/myenv/bin/activate
 
+# change this path
+ROOT=/user_data/mmhender/test_code/
+
 # put the code directory on your python path
-# (change this path)
-PYTHONPATH=:/user_data/mmhender/image_stats_gabor/code/${PYTHONPATH}
+PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 echo $PYTHONPATH
 
 # go to folder where script is located
-# (change this path)
-cd /user_data/mmhender/image_stats_gabor/code/feature_extraction
+cd ${ROOT}image_stats_gabor/code/feature_extraction
 
 # to test the code, use debug=1
 debug=1

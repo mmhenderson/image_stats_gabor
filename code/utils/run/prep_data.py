@@ -6,12 +6,18 @@ from utils import coco_utils
 
 nsd_root = default_paths.nsd_root
 path_to_save = default_paths.stim_root
+features_path = os.path.join(default_paths.root, 'features')
 print('nsd_root: %s'%nsd_root)
 print('path_to_save: %s'%path_to_save)
+print('features_path: %s'%features_path)
 
 if not os.path.exists(path_to_save):
     os.makedirs(path_to_save)
-    
+
+if not os.path.exists(features_path):
+    os.makedirs(features_path)
+sys.stdout.flush()
+
 if __name__ == '__main__':
     
     
@@ -24,9 +30,9 @@ if __name__ == '__main__':
 
     print('debug=%d'%args.debug)
     
-    # nsd_utils.make_image_data_partitions(pct_holdout=0.10)
+    nsd_utils.make_image_data_partitions(pct_holdout=0.10)
     
-    # nsd_utils.get_subject_specific_images(nsd_root, path_to_save, npix=240, debug=args.debug==1)
+    nsd_utils.get_subject_specific_images(nsd_root, path_to_save, npix=240, debug=args.debug==1)
 
     coco_utils.get_coco_ids_indep(n_images=10000)
 
