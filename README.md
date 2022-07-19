@@ -2,30 +2,48 @@
 <ol>
   <li>Clone the repository: 
     <ul>
-    <li> git clone https://github/com/mmhender/image_stats_gabor
+    <li> git clone git@github.com:mmhenderson/image_stats_gabor
     </ul>
   <li>Edit "root" in path_defs.py to reflect the name of the folder into which you cloned this repository.
+  <li>Access the fMRI dataset (NSD) and images (COCO) here:
+  <ul>
+    <li> http://naturalscenesdataset.org/
+    <li> https://cocodataset.org/
+    <li> https://github.com/cocodataset/cocoapi
+    <li> Once you download these, update the paths in path_defs.py accordingly.
+   </ul>
   <li>If using our pre-computed features or model fits (from XXX OSF repo XXX), these should be placed in a folder on the same level as this repository (i.e., also inside "root").
   <li> Add the code to your python path:
     <ul>
     <li> PYTHONPATH=:/your_root/image_stats_gabor/code/$PYTHONPATH
     </ul>
+  <li> Navigate to script directory:
+    <ul>
+      <li> cd code/run
+    </ul>
   <li> Prepare the image data/extract features:
     <ul>
-      <li> code/utils/run/prep_data.py
-      <li> code/utils/run/make_labels.py
-      <li> code/feature_extraction/extract_gabor_features.py
-      <li> code/feature_extraction/extract_alexnet_features.py
-      <li> code/feature_extraction/pca_feats.py (type=alexnet)
-      <li> Example shell scripts that call the above functions are provided in code/run/; note that you might need to alter these scripts to work with your system.
+      <li> prep_data.sh
+      <li> make_labels.py
+      <li> extract_gabor_features.sh
+      <li> extract_alexnet_features.sh
+      <li> ^ Before executing above scripts, modify the first few lines to reflect paths on your local filesystem. You can also change other parameters: by default, we have set "debug=1", so the code runs a shortened test version. To run it for real, set debug=0. If you'd like to run all subjects, you should also change the "subjects" variable to a list over all subjects (1-8).
     </ul>
-  <li>If running the fitting/analysis code from scratch, you can access the fMRI dataset (NSD) and images (COCO) here:
-  <ul>
-    <li> http://naturalscenesdataset.org/
-    <li> https://cocodataset.org/
-    <li> https://github.com/cocodataset/cocoapi
-    <li> If you download these, update the paths in path_defs.py accordingly.
-   </ul>
+  <li> Image statistics analyses:
+    <ul>
+      <li> gabor_image_stats.sh
+      <li> gabor_decoding.sh
+    </ul>
+  <li> Fit models:
+    <ul>
+      <li> fit_alexnet.sh (fit AlexNet encoding model, including pRFs)
+      <li> fit_gabor.sh (fit Gabor model using AlexNet pRFs)
+      <li> fit_gabor_fromscratch.sh (fit Gabor model from scratch, including pRFs)
+      <li> fit_cocoall.sh (fit COCO-all semantic category model; save its residuals)
+      <li> fit_gabor_fromresid.sh (fit Gabor model using residuals of COCO-all model)
+      <li> fit_gabor_withincateg.sh (fit Gabor model using images of one category at a time).
+    </ul>
+  <li>Visualize results using jupyter notebooks (see below for details).
  </ol>
  
  
