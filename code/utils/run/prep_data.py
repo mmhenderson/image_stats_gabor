@@ -2,7 +2,7 @@ import os, sys, argparse
 
 from utils import nsd_utils
 from utils import default_paths
-# from utils import coco_utils
+from utils import coco_utils
 
 nsd_root = default_paths.nsd_root
 path_to_save = default_paths.stim_root
@@ -17,7 +17,8 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     
-    parser.add_argument("--debug", type=int,default=0)
+    parser.add_argument("--debug", type=int,default=0,
+                    help="want to run a fast test version of this script to debug? 1 for yes, 0 for no")
    
     args = parser.parse_args()
 

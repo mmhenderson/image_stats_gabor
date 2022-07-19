@@ -340,7 +340,7 @@ def resize_image_tensor(x, newsize):
             r[i] = np.asarray(PIL.Image.fromarray(t).resize(newsize, resample=PIL.Image.BILINEAR))
         return r.transpose((0,3,1,2))   
 
-def get_subject_specific_images(nsd_root, path_to_save, npix=227, debug=0):
+def get_subject_specific_images(nsd_root, path_to_save, npix=227, debug=False):
 
     """ 
     Load the big array of NSD images for all subjects.
