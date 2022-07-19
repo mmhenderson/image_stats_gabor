@@ -56,7 +56,7 @@
   - <b>plotting</b>: Various utility functions for visualizing results.
   - <b>run</b>: Example shell scripts to execute model fitting. 
   - <b>utils</b>: Utility functions that are used by other functions. Note not all these functions are used here.
-    - <b>utils/run</b>: Convenience scripts to execute some of the functions utils folder. This folder includes the code needed to extract semantic category labels for each pRF.
+  - <b>utils/run</b>: Convenience scripts to execute some of the functions utils folder. This folder includes the code needed to extract semantic category labels for each pRF.
 - <b>make_roi_tables</b>
     - Create tables of the number of voxels in each ROI (our Supplementary Tables 1-4).
 - <b>plot_feature_selectivity</b>
@@ -78,7 +78,7 @@
 ### Other notes
  - Where the subject ID string "999" is used, this indicates the set of 10,000 COCO images that were randomly selected for use in the image-statistics analyses (these were not viewed by any NSD participant).
  - Some of the code includes references to other feature spaces (CLIP, sketch tokens). We did not include those feature sets in this paper, but you can see more code related to these other feature sets in our other repository at: github.com/mmhenderson/modfit
- - If using any of the shell scripts in /code/run/, first ensure that the directory /code/run/sbatch_output/ exists. This folder will store the output of the shell script execution. 
+ - If using a workload manager (slurm) to execute the shell scripts in /code/run/, first ensure that the directory /code/run/sbatch_output/ exists. This folder will store the output of the shell script execution. 
  
 
 
