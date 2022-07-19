@@ -129,7 +129,7 @@ def run_decoding(subject=999, sem_axes_decode = [0,2,3], \
 
             X = features_in_prf[inds2use,:]
             y = labels[inds2use]
-            tst_acc, tst_dprime = decode_lda(X, y, n_crossval_folds=10)
+            tst_acc, tst_dprime = decode_lda(X, y, n_crossval_folds=10, debug=debug)
             
             acc_each_prf[prf_model_index,aa] = tst_acc
             dprime_each_prf[prf_model_index, aa] = tst_dprime
@@ -146,12 +146,13 @@ def run_decoding(subject=999, sem_axes_decode = [0,2,3], \
                       'discrim_type_list': discrim_type_list})
 
     
-def decode_lda(X, y, n_crossval_folds=10):
+def decode_lda(X, y, n_crossval_folds=10, debug=False):
     
     n_trials = X.shape[0]
     assert(len(y)==n_trials)
     un_values = np.unique(y)
-    assert(len(un_values)>1)
+    if not debug:
+        assert(len(un_values)>1)
     
     n_per_fold = int(np.ceil(n_trials/n_crossval_folds))
     
