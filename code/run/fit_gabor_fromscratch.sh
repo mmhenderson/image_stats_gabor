@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --partition=tarrq
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --mem=32G
+#SBATCH --mem=16G
 #SBATCH --exclude=mind-1-13
 #SBATCH --cpus-per-task=4
 #SBATCH --open-mode=append
@@ -14,7 +14,7 @@ echo $SLURM_NODELIST
 source ~/myenv/bin/activate
 
 # change this path
-ROOT=/user_data/mmhender/
+ROOT=/user_data/mmhender/TEST/
 
 # put the code directory on your python path
 PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}

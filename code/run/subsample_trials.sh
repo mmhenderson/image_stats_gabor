@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --partition=tarrq
-#SBATCH --gres=gpu:1
-#SBATCH --mem=32G
+#SBATCH --partition=cpu
+#SBATCH --gres=gpu:0
+#SBATCH --mem=16G
 #SBATCH --exclude=mind-1-13
 #SBATCH --cpus-per-task=4
 #SBATCH --open-mode=append
@@ -23,15 +23,15 @@ PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 cd ${ROOT}image_stats_gabor/code/model_fitting
 
 # subjects=(1 2 3 4 5 6 7 8)
-subjects=(1)
+subject_list=(1)
 
 debug=1
-up_to_sess=1
-which_prf_grid=5
 
-for subject in ${subjects[@]}
+n_samp_iters=10
+separate_categ=1
+
+for subject in ${subject_list[@]}
 do
-
-    python3 semantic_discrim_raw.py --subject $subject --up_to_sess $up_to_sess --debug $debug --which_prf_grid $which_prf_grid
+    python3 subsample_trials.py --subject $subject --debug $debug --n_samp_iters $n_samp_iters --separate_categ $separate_categ
     
 done
