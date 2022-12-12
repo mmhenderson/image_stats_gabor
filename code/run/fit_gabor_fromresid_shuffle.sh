@@ -45,17 +45,19 @@ fitting_type=gabor_solo
 n_ori_gabor=12
 n_sf_gabor=8
 
-# trial_subset_list=(balance_indoor_outdoor outdoor_only indoor_only balance_animacy animate_only inanimate_only balance_real_world_size_binary large_only small_only)
-trial_subset_list=(outdoor_only indoor_only balance_animacy animate_only inanimate_only balance_real_world_size_binary large_only small_only)
+use_model_residuals=1
+residuals_model_name=all_coco
+
+shuffle_data=1
+n_shuff_iters=1000
+shuff_rnd_seed=0
+shuff_batch_size=100
+voxel_batch_size_outer=5000
+
 
 for subject in ${subjects[@]}
 do
 
-    for trial_subset in ${trial_subset_list[@]}
-    do
-
-        python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --n_ori_gabor $n_ori_gabor --n_sf_gabor $n_sf_gabor --trial_subset $trial_subset 
-    
-    done
+    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --n_ori_gabor $n_ori_gabor --n_sf_gabor $n_sf_gabor --use_model_residuals $use_model_residuals --residuals_model_name $residuals_model_name --shuffle_data $shuffle_data --shuff_rnd_seed $shuff_rnd_seed --n_shuff_iters $n_shuff_iters --shuff_batch_size $shuff_batch_size --voxel_batch_size_outer $voxel_batch_size_outer
     
 done

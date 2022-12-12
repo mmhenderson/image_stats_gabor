@@ -14,7 +14,7 @@ echo $SLURM_NODELIST
 source ~/myenv/bin/activate
 
 # change this path
-ROOT=/user_data/mmhender/TEST/
+ROOT=/user_data/mmhender/
 
 # put the code directory on your python path
 PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
@@ -22,10 +22,10 @@ PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 # go to folder where script is located
 cd ${ROOT}image_stats_gabor/code/model_fitting
 
-# subjects=(1 2 3 4 5 6 7 8)
-subject_list=(1)
+subject_list=(1 2 3 4 5 6 7 8)
+# subject_list=(8)
 
-debug=1
+debug=0
 
 n_samp_iters=10
 separate_categ=1
