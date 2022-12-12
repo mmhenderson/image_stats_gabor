@@ -15,15 +15,24 @@ def get_path(feature_type):
     
     if 'gabor' in feature_type:
         path_to_load = default_paths.gabor_texture_feat_path
+    elif 'color' in feature_type:
+        path_to_load = default_paths.color_feat_path
     elif 'texture' in feature_type:
         path_to_load = default_paths.pyramid_texture_feat_path
     elif 'sketch_tokens' in feature_type:
         path_to_load = default_paths.sketch_token_feat_path
     elif 'alexnet' in feature_type:
-        path_to_load = default_paths.alexnet_feat_path
+        if 'blurface' in feature_type:
+            path_to_load = default_paths.alexnet_blurface_feat_path
+        else:
+            path_to_load = default_paths.alexnet_feat_path
+    elif 'resnet' in feature_type:
+        if 'blurface' in feature_type:
+            path_to_load = default_paths.resnet50_blurface_feat_path
+        else:
+            path_to_load = default_paths.resnet50_feat_path
     elif 'clip' in feature_type:
         path_to_load = default_paths.clip_feat_path
-    path_to_load = os.path.join(path_to_load, 'feature_decoding')
     
     return path_to_load
 
@@ -31,7 +40,8 @@ def load_decoding(feature_type, subject=999, which_prf_grid=5, \
                   balanced=False, verbose=False):
 
     path_to_load = get_path(feature_type)
-
+    path_to_load = os.path.join(path_to_load, 'feature_decoding')
+    
     if balanced:
         fn1 = os.path.join(path_to_load, 'S%d_%s_LDA_all_grid%d_balanced.npy'%(subject, feature_type, which_prf_grid))
     else:
@@ -45,6 +55,26 @@ def load_decoding(feature_type, subject=999, which_prf_grid=5, \
     dprime = decoding['dprime']
     
     return acc, dprime, names
+
+def load_floc_decoding(feature_type, which_prf_grid=5, verbose=False):
+
+    path_to_load = get_path(feature_type)
+    path_to_load = os.path.join(path_to_load, 'feature_decoding_floc')
+    
+    image_set='floc'
+    fn1 = os.path.join(path_to_load, '%s_%s_LDA_all_grid%d.npy'%(image_set, feature_type, which_prf_grid))
+   
+    if verbose:
+        print('loading from %s'%fn1)
+    decoding = np.load(fn1,allow_pickle=True).item()
+    
+    names = decoding['discrim_type_list']
+    acc = decoding['acc']
+    dprime = decoding['dprime']
+    pairwise_acc = decoding['pairwise_acc']
+    pairwise_dprime = decoding['pairwise_dprime']
+    
+    return acc, dprime, pairwise_acc, pairwise_dprime, names
 
 
 def analyze_decoding_slopes(subject, feature_type, which_prf_grid=5, \
@@ -136,7 +166,8 @@ def analyze_decoding_slopes(subject, feature_type, which_prf_grid=5, \
         slopes_table['%s fdr sig'%par_names[pi]] = mask_fdr[:,pi]
     
     path_to_save = get_path(feature_type)
-       
+    path_to_save = os.path.join(path_to_save, 'feature_decoding')
+    
     if balanced:
         fn2save = os.path.join(path_to_save, 'prf_decoding_slopes_balanced.csv')
     else:
