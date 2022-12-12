@@ -35,8 +35,7 @@ def get_feature_loaders(subjects, feature_type, which_prf_grid=5):
                                                         which_prf_grid=which_prf_grid, \
                                                         feature_type='pyramid_texture',\
                                                         n_ori=4, n_sf=4,\
-                                                        include_ll=include_ll, include_hl=include_hl,\
-                                                        use_pca_feats_hl = use_pca_feats_hl) for ss in subjects]       
+                                                        pca_type='pcaHL') for ss in subjects]       
  
     elif 'sketch_tokens' in feature_type:
         path_to_load = default_paths.sketch_token_feat_path
@@ -50,27 +49,42 @@ def get_feature_loaders(subjects, feature_type, which_prf_grid=5):
                                                         use_pca_feats = False, \
                                                         use_residual_st_feats=use_residual_st_feats) \
                                                             for ss in subjects]
+    elif 'color' in feature_type:
+        path_to_load = default_paths.color_feat_path
+        feat_loaders = [fwrf_features.fwrf_feature_loader(subject=ss,\
+                                                        which_prf_grid=which_prf_grid, \
+                                                        feature_type='color') \
+                                                            for ss in subjects]
 
-    elif feature_type=='alexnet':
+    elif 'alexnet' in feature_type:
         assert(len(subjects)==1) # since these features are pca-ed within subject, can't concatenate.
         path_to_load = default_paths.alexnet_feat_path
-        if layer_name is None or layer_name=='':
-            layer_name='Conv5_ReLU'
+        # if layer_name is None or layer_name=='':
+        layer_name='Conv5_ReLU'
+        blurface = 'blurface' in feature_type
         feat_loaders = [fwrf_features.fwrf_feature_loader(subject=ss,\
                                                         which_prf_grid=which_prf_grid, \
                                                         feature_type='alexnet',layer_name=layer_name,\
-                                                        use_pca_feats = True, padding_mode = 'reflect') \
+                                                        use_pca_feats = True, padding_mode = 'reflect', \
+                                                        blurface=blurface) \
                                                         for ss in subjects]
 
-    elif feature_type=='clip':
+    elif 'clip' in feature_type or 'resnet' in feature_type:
         assert(len(subjects)==1) # since these features are pca-ed within subject, can't concatenate.
         path_to_load = default_paths.clip_feat_path
-        if layer_name is None or layer_name=='':
-            layer_name='block15'
+        # if layer_name is None or layer_name=='':
+        layer_name='block15'
+        if 'clip' in feature_type:
+            training_type='clip'
+        elif 'blurface' in feature_type:
+            training_type='blurface'
+        else:
+            training_type='imgnet'
         feat_loaders = [fwrf_features.fwrf_feature_loader(subject=ss,\
                                                         which_prf_grid=which_prf_grid, \
-                                                        feature_type='clip',layer_name=layer_name,\
-                                                        model_architecture='RN50',use_pca_feats=True) \
+                                                        feature_type='resnet',layer_name=layer_name,\
+                                                        model_architecture='RN50',use_pca_feats=True, \
+                                                        training_type=training_type) \
                                                         for ss in subjects]
 
     else:
