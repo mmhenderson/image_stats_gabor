@@ -6,6 +6,7 @@
 #SBATCH --output=./sbatch_output/output-%A-%x-%u.out 
 #SBATCH --time=8-00:00:00
 
+set -e 
 source ~/myenv/bin/activate
 # put the code directory on your python path
 # (change this path)
@@ -20,12 +21,13 @@ cd /user_data/mmhender/image_stats_gabor/code/feature_extraction/
 # to run for real, set debug=0 (False)
 debug=0
 
-# subject_list=(1)
-subject_list=(1 2 3 4 5 6 7 8 999)
+subject_list=(1)
+# subject_list=(1 2 3 4 5 6 7 8 999)
 
 for subject in ${subject_list[@]}
 do
 
-    python3 label_faces.py --subject $subject --debug $debug
+    python3 -c "import label_faces;  label_faces.write_binary_face_labels_csv($subject, debug=$debug); exit()"
+    # python3 label_faces.py --subject $subject --debug $debug
 
 done
