@@ -40,3 +40,6 @@ beta_root = os.path.join(nsd_root,'nsddata_betas','ppdata')
 
 coco_api_path = path_defs.coco_api_path
 coco_ims_path = path_defs.coco_ims_path
+
+# needed for face labeling code
+retinaface_path = path_defs.retinaface_path
