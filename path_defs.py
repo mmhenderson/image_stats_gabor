@@ -18,8 +18,8 @@ nsd_path = '/lab_data/tarrlab/common/datasets/NSD'
 
 # Path to the COCO API toolbox
 # https://github.com/cocodataset/cocoapi
-# coco_api_path = '/user_data/mmhender/toolboxes/coco_annot'
-coco_api_path = ''
+coco_api_path = '/user_data/mmhender/toolboxes/coco_annot'
+# coco_api_path = ''
 
 # Path to where the raw COCO images are stored
 # https://cocodataset.org/
