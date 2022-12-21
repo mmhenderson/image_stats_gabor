@@ -10,7 +10,7 @@
 source ~/myenv/bin/activate
 
 # change this path
-ROOT=/user_data/mmhender/TEST/
+ROOT=/user_data/mmhender/
 
 # put the code directory on your python path
 PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
@@ -20,7 +20,7 @@ cd ${ROOT}image_stats_gabor/code/analyze_features
 
 # to test the code, use debug=1
 # to run for real, set debug=0 (False)
-debug=1
+debug=0
 
 which_prf_grid=5
 
@@ -29,6 +29,6 @@ subj=999
 
 feature_type=gabor_solo
 
-python3 get_feature_stats.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid
+# python3 get_feature_stats.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid
 
 python3 get_feature_sem_corrs.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid
