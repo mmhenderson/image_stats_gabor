@@ -1159,7 +1159,7 @@ def concat_labels_fullimage(subject, verbose=False):
                               'col_names_all': col_names_all}, allow_pickle=True)
 
 
-def count_highlevel_labels(which_prf_grid=5, axes_to_do=[0,2,3], \
+def count_highlevel_labels(which_prf_grid=5, axes_to_do=[0,1,2,3], \
                            debug=False):
 
     """
@@ -1187,7 +1187,7 @@ def count_highlevel_labels(which_prf_grid=5, axes_to_do=[0,2,3], \
                                      'S%d_within_prf_grid%d'%(ss, which_prf_grid))
         if si==0:
             groups = np.load(os.path.join(default_paths.stim_labels_root,\
-                                  'All_concat_labelgroupnames.npy'), allow_pickle=True).item()
+                                  'Highlevel_concat_labelgroupnames.npy'), allow_pickle=True).item()
             group_names = [groups['col_names_all'][aa] for aa in axes_to_do]
             axis_names = [groups['discrim_type_list'][aa] for aa in axes_to_do]
           
@@ -1214,7 +1214,7 @@ def count_highlevel_labels(which_prf_grid=5, axes_to_do=[0,2,3], \
                 continue
 
             fn2load = os.path.join(labels_folder, \
-                                      'S%d_concat_prf%d.csv'%(ss, prf_model_index))
+                                      'S%d_highlevel_concat_prf%d.csv'%(ss, prf_model_index))
             concat_df = pd.read_csv(fn2load, index_col=0)
             labels = np.array(concat_df)
             labels = labels[image_order,:]
