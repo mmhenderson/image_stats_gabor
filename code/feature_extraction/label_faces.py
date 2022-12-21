@@ -90,6 +90,7 @@ def write_binary_face_labels_csv(subject, min_pix = 10, which_prf_grid=5, debug=
     if subject==999:
         # 999 is a code i am using to indicate the independent set of coco images, which were
         # not actually shown to any NSD participants
+        from utils import coco_utils
         subject_df = coco_utils.load_indep_coco_info()      
     else:
         subject_df = nsd_utils.get_subj_df(subject);
@@ -189,5 +190,10 @@ if __name__ == '__main__':
     
     os.chdir(default_paths.retinaface_path)
     
-    proc_one_subject(subject = args.subject, args=args)
+    save_labels_path = os.path.join(default_paths.stim_labels_root, 'face_labels_retinaface')
+    fn2save = os.path.join(save_labels_path, 'S%d_facelabels.npy'%(args.subject))
+    if not os.path.exists(fn2save):
+        proc_one_subject(subject = args.subject, args=args)
+    
+    write_binary_face_labels_csv(subject = args.subject, debug=args.debug)
     
