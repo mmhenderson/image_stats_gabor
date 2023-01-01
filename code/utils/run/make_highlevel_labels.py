@@ -31,10 +31,10 @@ if __name__ == '__main__':
     else:
         subjects = list(np.arange(1,9))+[999]
         
-    # for subject in subjects:
+    for subject in subjects:
 
-        # label_utils.concat_highlevel_labels_each_prf(subject=subject, \
-                                      # which_prf_grid=which_prf_grid, verbose=True, debug=debug)
+        label_utils.concat_highlevel_labels_each_prf(subject=subject, \
+                                      which_prf_grid=which_prf_grid, verbose=True, debug=debug)
     
-    label_utils.count_highlevel_labels(which_prf_grid=which_prf_grid, axes_to_do=[0,1,2,3], \
+    label_utils.count_highlevel_labels(which_prf_grid=which_prf_grid, axes_to_do=[0,1,2,3,4], \
                            debug=debug)
