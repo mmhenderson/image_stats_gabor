@@ -1,7 +1,6 @@
 #!/bin/bash
-#SBATCH --partition=tarrq
-#SBATCH --gres=gpu:0
-#SBATCH --mem=32G
+#SBATCH --partition=gpu
+#SBATCH --mem=100G
 #SBATCH --cpus-per-task=4
 #SBATCH --open-mode=append
 #SBATCH --output=./sbatch_output/output-%A-%x-%u.out 
@@ -10,15 +9,11 @@
 source ~/myenv/bin/activate
 # put the code directory on your python path
 # (change this path)
-# PYTHONPATH=:/user_data/mmhender/TEST/image_stats_gabor/code/${PYTHONPATH}
-PYTHONPATH=:/user_data/mmhender/modfit/code/${PYTHONPATH}
-
+PYTHONPATH=:/user_data/mmhender/image_stats_gabor/code/${PYTHONPATH}
 echo $PYTHONPATH
 
 # to test the code, use debug=1
 # to run for real, set debug=0 (False)
 debug=0
 
-cd /user_data/mmhender/modfit/code/utils/run/
-python3 make_labels.py --debug $debug
-# python3 ../utils/run/make_labels.py --debug $debug
+python3 ../utils/run/prep_data_indep_big.py --debug $debug

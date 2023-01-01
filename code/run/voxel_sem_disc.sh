@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=tarrq
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
 #SBATCH --exclude=mind-1-13
@@ -30,9 +30,11 @@ debug=0
 up_to_sess=40
 which_prf_grid=5
 
+trial_subset='all_trnval'
+
 for subject in ${subjects[@]}
 do
 
-    python3 semantic_discrim_raw.py --subject $subject --up_to_sess $up_to_sess --debug $debug --which_prf_grid $which_prf_grid
+    python3 semantic_discrim_raw.py --subject $subject --up_to_sess $up_to_sess --debug $debug --which_prf_grid $which_prf_grid --trial_subset $trial_subset
     
 done

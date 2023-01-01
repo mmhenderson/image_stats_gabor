@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --partition=gpu
+#SBATCH --partition=tarrq
 #SBATCH --gres=gpu:1
-#SBATCH --mem=32G
+#SBATCH --mem=64G
 #SBATCH --cpus-per-task=4
 #SBATCH --open-mode=append
 #SBATCH --output=./sbatch_output/output-%A-%x-%u.out 
@@ -10,7 +10,7 @@
 source ~/myenv/bin/activate
 
 # change this path
-ROOT=/user_data/mmhender/TEST/
+ROOT=/user_data/mmhender/
 
 # put the code directory on your python path
 PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
@@ -25,12 +25,12 @@ use_node_storage=0
 n_ori=12
 n_sf=8
 
-sample_batch_size=100
+sample_batch_size=50
 which_prf_grid=5
 gabor_solo=1
 nonlin_fn=1
 
-sublist=(1)
+sublist=(998)
 # sublist=(1 2 3 4 5 6 7 8 999)
 
 for subject in ${sublist[@]}

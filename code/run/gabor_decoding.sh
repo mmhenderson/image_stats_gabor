@@ -28,7 +28,7 @@ balance_for_decoding=1
 
 cd ${ROOT}image_stats_gabor/code/model_fitting
 
-# python3 subsample_trials.py --subject $subj --debug $debug --n_samp_iters $n_samp_iters --balance_for_decoding $balance_for_decoding
+python3 subsample_trials.py --subject $subj --debug $debug --n_samp_iters $n_samp_iters --balance_for_decoding $balance_for_decoding
 
 feature_type=gabor_solo
 balance_downsample=1
