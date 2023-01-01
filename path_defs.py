@@ -6,7 +6,7 @@ root = '/user_data/mmhender/'
 #     "image_stats_gabor" (main project folder with all our code)
 #     "features" (precomputed features extracted for each pRF)
 # If you're just trying to load our models that have already been fit (not fitting
-# from scratch), then you only need the "texturemodel" folder
+# from scratch), then you only need the "image_stats_gabor" folder
 
 project_name = 'image_stats_gabor'
 
@@ -23,7 +23,7 @@ coco_api_path = '/user_data/mmhender/toolboxes/coco_annot'
 
 # Path to where the raw COCO images are stored
 # https://cocodataset.org/
-# coco_ims_path = '/lab_data/tarrlab/common/datasets/COCO'
-coco_ims_path = ''
+coco_ims_path = '/lab_data/tarrlab/common/datasets/COCO'
+# coco_ims_path = ''
 
 retinaface_path = '/user_data/mmhender/toolboxes/RetinaFace-tf2/'
