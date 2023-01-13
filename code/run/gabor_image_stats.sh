@@ -18,17 +18,14 @@ PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 # go to folder where script is located
 cd ${ROOT}image_stats_gabor/code/analyze_features
 
-# to test the code, use debug=1
-# to run for real, set debug=0 (False)
-debug=0
-
 which_prf_grid=5
 
-subj=999 
+subj=999
+# subj=998
 # 999 is a code for the independent set of 10000 images
 
 feature_type=gabor_solo
 
 # python3 get_feature_stats.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid
 
-python3 get_feature_sem_corrs.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid
+python3 get_feature_sem_corrs.py --subject $subj --feature_type $feature_type --which_prf_grid $which_prf_grid

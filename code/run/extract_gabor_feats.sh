@@ -1,11 +1,15 @@
 #!/bin/bash
 #SBATCH --partition=tarrq
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64G
+#SBATCH --mem=72G
 #SBATCH --cpus-per-task=4
+#SBATCH --exclude=mind-1-34
 #SBATCH --open-mode=append
 #SBATCH --output=./sbatch_output/output-%A-%x-%u.out 
 #SBATCH --time=8-00:00:00
+
+echo $SLURM_JOBID
+echo $SLURM_NODELIST
 
 source ~/myenv/bin/activate
 
@@ -20,12 +24,12 @@ echo $PYTHONPATH
 cd ${ROOT}image_stats_gabor/code/feature_extraction
 
 # to test the code, use debug=1
-debug=1
+debug=0
 use_node_storage=0
 n_ori=12
 n_sf=8
 
-sample_batch_size=50
+sample_batch_size=100
 which_prf_grid=5
 gabor_solo=1
 nonlin_fn=1
