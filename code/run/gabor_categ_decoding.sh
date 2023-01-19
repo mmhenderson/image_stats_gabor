@@ -24,12 +24,13 @@ subj=998
 # 999 is a code for the independent set of 10000 images
 
 n_samp_iters=2
-balance_for_decoding=1
-balance_for_decoding_matchprfs=1
+balance_categ_for_decoding_matchprfs=1
+balance_for_decoding=0
+balance_for_decoding_matchprfs=0
 
 cd ${ROOT}image_stats_gabor/code/model_fitting
 
-python3 subsample_trials.py --subject $subj --debug $debug --n_samp_iters $n_samp_iters --balance_for_decoding $balance_for_decoding --balance_for_decoding_matchprfs $balance_for_decoding_matchprfs
+python3 subsample_trials.py --subject $subj --debug $debug --n_samp_iters $n_samp_iters --balance_for_decoding $balance_for_decoding --balance_for_decoding_matchprfs $balance_for_decoding_matchprfs --balance_categ_for_decoding_matchprfs $balance_categ_for_decoding_matchprfs
 
 feature_type=gabor_solo
 which_prf_grid=5
@@ -37,9 +38,7 @@ which_prf_grid=5
 cd ${ROOT}image_stats_gabor/code/analyze_features
 
 match_prf_trialcounts=1
+categ_vs_none=1
 
-python3 decode_categ_from_features.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid --match_prf_trialcounts $match_prf_trialcounts
-
-match_prf_trialcounts=0
-
-python3 decode_categ_from_features.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid --match_prf_trialcounts $match_prf_trialcounts
+python3 decode_categ_from_features.py --subject $subj --debug $debug --feature_type $feature_type --which_prf_grid $which_prf_grid --match_prf_trialcounts $match_prf_trialcounts --categ_vs_none $categ_vs_none
+ 
