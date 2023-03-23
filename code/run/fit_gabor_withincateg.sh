@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --partition=gpu
+#SBATCH --partition=tarrq
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
-#SBATCH --exclude=mind-1-13
+#SBATCH --exclude=mind-1-13,mind-1-32
 #SBATCH --cpus-per-task=4
 #SBATCH --open-mode=append
 #SBATCH --output=./sbatch_output/output-%A-%x-%u.out 
@@ -11,7 +11,7 @@
 echo $SLURM_JOBID
 echo $SLURM_NODELIST
 
-source ~/myenv/bin/activate
+source ~/imstat_env/bin/activate
 
 # change this path
 ROOT=/user_data/mmhender/
@@ -23,14 +23,14 @@ PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 cd ${ROOT}image_stats_gabor/code/model_fitting
 
 # subjects=(1 2 3 4 5 6 7 8)
-subjects=(1)
+subjects=(7)
 
 
-debug=1
-up_to_sess=1
+# debug=1
+# up_to_sess=1
 
-# debug=0
-# up_to_sess=40
+debug=0
+up_to_sess=40
 
 # use the pre-computed pRFs here, for main analysis
 use_precomputed_prfs=1
@@ -46,7 +46,8 @@ n_ori_gabor=12
 n_sf_gabor=8
 
 # trial_subset_list=(balance_indoor_outdoor outdoor_only indoor_only balance_animacy animate_only inanimate_only balance_real_world_size_binary large_only small_only)
-trial_subset_list=(outdoor_only indoor_only balance_animacy animate_only inanimate_only balance_real_world_size_binary large_only small_only)
+trial_subset_list=(both_face-building face building both_animate-inanimate animate inanimate both_small-large small large both_indoor-outdoor indoor outdoor)
+trial_subset_list=(both_small-large)
 
 for subject in ${subjects[@]}
 do

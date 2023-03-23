@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=cpu
+#SBATCH --partition=tarrq
 #SBATCH --gres=gpu:0
 #SBATCH --mem=16G
 #SBATCH --exclude=mind-1-13
@@ -27,7 +27,7 @@ subject_list=(1 2 3 4 5 6 7 8)
 
 debug=0
 
-n_samp_iters=10
+n_samp_iters=2
 separate_categ=1
 
 for subject in ${subject_list[@]}

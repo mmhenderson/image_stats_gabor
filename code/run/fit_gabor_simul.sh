@@ -49,9 +49,7 @@ use_simulated_data=1
 simul_model_name='gabor'
 simul_noise_level=0.10
 
-# trial_subset_list=(all balance_indoor_outdoor outdoor_only indoor_only balance_animacy animate_only inanimate_only balance_real_world_size_binary large_only small_only)
-trial_subset_list=(balance_indoor_outdoor outdoor_only indoor_only balance_animacy animate_only inanimate_only balance_real_world_size_binary large_only small_only)
-# trial_subset_list=(outdoor_only)
+trial_subset_list=(both_animate-inanimate animate inanimate both_small-large small large both_indoor-outdoor indoor outdoor)
 
 for subject in ${subjects[@]}
 do

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=tarrq
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
 #SBATCH --exclude=mind-1-13,mind-1-32,mind-1-34
@@ -25,29 +25,29 @@ cd ${ROOT}image_stats_gabor/code/model_fitting
 subjects=(1 2 3 4 5 6 7 8)
 # subjects=(1)
 
+
 # debug=1
 # up_to_sess=1
 
 debug=0
 up_to_sess=40
 
-# use the pre-computed pRFs here, for main analysis
 use_precomputed_prfs=1
 which_prf_grid=5
 
-from_scratch=0
 do_val=1
-do_tuning=1
-save_model_residuals=1
+from_scratch=1
+do_tuning=0
 
-fitting_type=gabor_solo
+fitting_type=semantic
+semantic_feature_set=all_coco
 
-n_ori_gabor=12
-n_sf_gabor=8
+use_model_residuals=1
+residuals_model_name=gabor_solo_ridge_12ori_8sf
 
 for subject in ${subjects[@]}
 do
 
-    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --n_ori_gabor $n_ori_gabor --n_sf_gabor $n_sf_gabor --save_model_residuals $save_model_residuals
+    python3 fit_model.py --subject $subject --debug $debug --up_to_sess $up_to_sess --use_precomputed_prfs $use_precomputed_prfs --which_prf_grid $which_prf_grid --from_scratch $from_scratch --do_val $do_val --do_tuning $do_tuning --fitting_type $fitting_type --semantic_feature_set $semantic_feature_set --use_model_residuals $use_model_residuals --residuals_model_name $residuals_model_name
     
 done
