@@ -44,7 +44,7 @@
       </ul>
     </li> 
    </ul>
-  <li>Use the jupyter notebooks inside "notebooks" to plot the results of model fitting, and reproduce all our figures.
+  <li>Use the jupyter notebooks in "plotting_notebooks" to plot the results of model fitting, and reproduce all our figures.
  </ol>
  
   
