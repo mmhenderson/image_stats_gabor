@@ -10,6 +10,8 @@
     <li> https://osf.io/dwehn/
     <li> After unzipping, you should have a folder "model_fits", which can be placed inside "image_stats_gabor".
     <li> You should also have a folder "rois", which should be placed at: /root/nsd/rois
+    <li> Folder "feature_stats" and "feature_decoding" should be placed at: /root/features/gabor_texture/feature_stats and /root/features/gabor_texture/feature_decoding
+    <li> Folder "labels" should be placed at: /root/nsd/labels/
   </ul>
   <li>If fitting from scratch: access the fMRI dataset (NSD) and images (COCO) here:
   <ul>
@@ -43,10 +45,6 @@
     </li> 
    </ul>
   <li>Use the jupyter notebooks inside "notebooks" to plot the results of model fitting, and reproduce all our figures.
-  <ul>
-    <li> Some of the plots require PyCortex, which you can download here:
-    <li> https://pypi.org/project/pycortex/
-  </ul>
  </ol>
  
   
