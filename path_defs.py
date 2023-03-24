@@ -13,17 +13,19 @@ project_name = 'image_stats_gabor'
 # Set path to the full NSD data repository (this is where the beta weights are stored)
 # http://naturalscenesdataset.org/
 # This is only needed if you want to fit from scratch
-nsd_path = '/lab_data/tarrlab/common/datasets/NSD'   
-# nsd_path = ''
+# nsd_path = '/lab_data/tarrlab/common/datasets/NSD'   
+nsd_path = ''
 
 # Path to the COCO API toolbox
 # https://github.com/cocodataset/cocoapi
-coco_api_path = '/user_data/mmhender/toolboxes/coco_annot'
-# coco_api_path = ''
+# coco_api_path = '/user_data/mmhender/toolboxes/coco_annot'
+coco_api_path = ''
 
 # Path to where the raw COCO images are stored
 # https://cocodataset.org/
-coco_ims_path = '/lab_data/tarrlab/common/datasets/COCO'
-# coco_ims_path = ''
+# coco_ims_path = '/lab_data/tarrlab/common/datasets/COCO'
+coco_ims_path = ''
 
-retinaface_path = '/user_data/mmhender/toolboxes/RetinaFace-tf2/'
+# https://github.com/StanislasBertrand/RetinaFace-tf2
+# retinaface_path = '/user_data/mmhender/toolboxes/RetinaFace-tf2/'
+retinaface_path = ''
