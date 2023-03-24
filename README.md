@@ -1,3 +1,8 @@
+### Code related to our paper:
+Henderson, M.M., Tarr, M.J., & Wehbe, L. (2023; in press). Low-level tuning biases in higher visual cortex reflect the semantic informativeness of visual features. <i>Journal of Vision.</i>
+
+See preprint at: https://www.biorxiv.org/content/10.1101/2022.08.04.502850v1
+
 ### Setup instructions:
 <ol>
   <li>Clone the repository: 
