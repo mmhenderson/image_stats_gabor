@@ -20,8 +20,7 @@ PYTHONPATH=:${ROOT}image_stats_gabor/code/${PYTHONPATH}
 debug=0
 
 subj=998
-# subj=999
-# 999 is a code for the independent set of 10000 images
+# 998 is a code for the independent set of 10000 images
 
 n_samp_iters=2
 balance_categ_for_decoding_matchprfs=1
