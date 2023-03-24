@@ -67,6 +67,9 @@ def compute_prf_coverage(subjects, \
 
     fn2save = os.path.join(default_paths.save_fits_path, 'prf_coverage', \
                                'All_pRFs_%s'%fitting_type)
+    if not os.path.exists(os.path.join(default_paths.save_fits_path, 'prf_coverage')):
+        os.makedirs(os.path.join(default_paths.save_fits_path, 'prf_coverage'))
+        
     if which_hemis!='concat':
         fn2save += '_%s_only'%which_hemis
         
@@ -145,7 +148,9 @@ def compute_prf_coverage_bigroigroups(subjects, \
 
     fn2save = os.path.join(default_paths.save_fits_path, 'prf_coverage', \
                                'All_pRFs_bigroigroups_%s'%fitting_type)
-    
+    if not os.path.exists(os.path.join(default_paths.save_fits_path, 'prf_coverage')):
+        os.makedirs(os.path.join(default_paths.save_fits_path, 'prf_coverage'))
+     
     fn2save+= '_%dpix.npy'%(image_size)
     
     print('saving to %s'%fn2save)
